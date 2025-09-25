@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(onNavigateToAddCard: () -> Unit,
                onNavigateToAllCards: () -> Unit,
                onNavigateToFavorites: () -> Unit) {
+    // Drawer state
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     // Theme setup
@@ -95,6 +96,7 @@ fun HomeScreen(onNavigateToAddCard: () -> Unit,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxSize()
             ) {
+                Spacer(Modifier.height(30.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -103,6 +105,7 @@ fun HomeScreen(onNavigateToAddCard: () -> Unit,
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
+                    Spacer(Modifier.width(50.dp))
                     Text(
                         text = stringResource(id = R.string.app_title),
                         style = MaterialTheme.typography.headlineLarge,

@@ -46,13 +46,19 @@ fun AppNavigation() {
         startDestination = "home" // First screen to display when app starts
     ) {
         composable("add_card") {
-            AddCardScreen()
+            AddCardScreen(
+                onNavigateToHome = { navController.navigate("home") }
+            )
         }
         composable("all_cards") {
-            AllCardsScreen()
+            AllCardsScreen(
+                onNavigateToHome = { navController.navigate("home") }
+            )
         }
         composable("favorites") {
-            FavoriteScreen()
+            FavoriteScreen(
+                onNavigateToHome = { navController.navigate("home") }
+            )
         }
 // Defines the "home" route and what UI to display there
         composable("home") {
