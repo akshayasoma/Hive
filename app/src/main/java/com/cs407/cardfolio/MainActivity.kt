@@ -38,8 +38,8 @@ fun AppNavigation() {
 // Creates and remembers a NavController to manage navigation state
     val navController = rememberNavController()
 // Access the custom gradient colors from the app's theme
-    val gradientTopColor = AppTheme.customColors.gradientTop
-    val gradientBottomColor = AppTheme.customColors.gradientBottom
+    AppTheme.customColors.gradientTop
+    AppTheme.customColors.gradientBottom
 // NavHost sets up the navigation graph for the app
     NavHost(
         navController = navController, // Controller that handles navigation

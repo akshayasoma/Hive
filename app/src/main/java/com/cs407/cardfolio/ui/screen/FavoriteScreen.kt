@@ -15,9 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -32,12 +29,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.cs407.cardfolio.CardStore
 import com.cs407.cardfolio.FavoriteStore
 import com.cs407.cardfolio.R
 import com.cs407.cardfolio.ui.theme.AppTheme
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 @Composable
 fun FavoriteScreen(onNavigateToHome: () -> Unit) {

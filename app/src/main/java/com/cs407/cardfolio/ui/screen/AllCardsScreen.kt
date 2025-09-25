@@ -1,5 +1,6 @@
 package com.cs407.cardfolio.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,73 +11,40 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.cs407.cardfolio.CardEntry
 import com.cs407.cardfolio.CardStore
 import com.cs407.cardfolio.FavoriteStore
-import com.cs407.cardfolio.ui.theme.AppTheme
-import kotlinx.coroutines.launch
 import com.cs407.cardfolio.R
-import java.util.Collections.addAll
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.KeyboardType
-import kotlin.collections.addAll
-import kotlin.collections.putAll
-import kotlin.collections.remove
-import kotlin.text.clear
-import kotlin.text.get
+import com.cs407.cardfolio.ui.theme.AppTheme
 
 @Composable
 fun AllCardsScreen(onNavigateToHome: () -> Unit) {
@@ -108,33 +76,6 @@ fun AllCardsScreen(onNavigateToHome: () -> Unit) {
     }
 
 }
-
-//@Composable
-//fun allCards(onNavigateToHome: () -> Unit) {
-//    val cardState = remember { mutableStateMapOf<String, CardEntry>().apply { putAll(CardStore.cards) } }
-//    val favorites = remember { mutableStateSetOf<String>().apply { addAll(FavoriteStore.favorites) } }
-//
-//    var showDeleteDialog by remember { mutableStateOf(false) }
-//    var cardToDeleteId by remember { mutableStateOf<String?>(null) }
-//    val cardToDelete = cardToDeleteId?.let { cardState[it] }
-//    Row(
-//        modifier = Modifier.fillMaxWidth(),
-//        verticalAlignment = Alignment.CenterVertically
-//    ) {
-//        IconButton(onClick = { onNavigateToHome() }) {
-//            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-//        }
-//        Spacer(Modifier.width(100.dp))
-//        Text(
-//            text = stringResource(id = R.string.all_cards),
-//            style = MaterialTheme.typography.headlineLarge,
-//            modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
-//        )
-//    }
-//
-//    Text(text = stringResource(id = R.string.no_cards))
-//}
-
 @Composable
 fun allCards(onNavigateToHome: () -> Unit) {
     var cardState by
