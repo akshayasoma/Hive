@@ -137,7 +137,7 @@ fun allCards(onNavigateToHome: () -> Unit) {
                                     text = card.name,
                                     style = MaterialTheme.typography.headlineSmall
                                 )
-
+                                Spacer(modifier = Modifier.weight(1f))
                                 IconButton(
                                     onClick = {
                                         if (isFavorite) {
