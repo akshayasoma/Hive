@@ -5,9 +5,11 @@ import com.cs407.hive.R
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -28,6 +31,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
@@ -39,13 +43,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
+
+
 
 
 @Composable
@@ -72,6 +81,12 @@ fun CreateScreen(){
             // Circular Logo Placeholder
             Box(
                 modifier = Modifier
+                    .graphicsLayer {
+                        shadowElevation = 8.dp.toPx()
+                        shape = RoundedCornerShape(12.dp)
+                        clip = true
+                    }
+                    .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
                     .size(120.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.onPrimary),
@@ -84,75 +99,123 @@ fun CreateScreen(){
                 )
             }
 
-            // Group Name TextField
-            OutlinedTextField(
-                value = groupName,
-                onValueChange = { groupName = it },
-                label = {
-                    Text(
-                        text = stringResource(id = R.string.group_name),
-                        color = MaterialTheme.colorScheme.onSecondary
-                    )
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        shadowElevation = 8.dp.toPx()
+                        shape = RoundedCornerShape(12.dp)
+                        clip = false
+                        translationX = -8.dp.toPx() // shift shadow to left
+                        translationY = 8.dp.toPx()  // shift shadow to bottom
+                    }
+            ){
+                // Group Name TextField
+                OutlinedTextField(
+                    value = groupName,
+                    onValueChange = { groupName = it },
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.group_name),
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
                     },
-                textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                    focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(),
+
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+            }
+
 
             // Group ID TextField
-            OutlinedTextField(
-                value = groupId,
-                onValueChange = { groupId = it },
-                label = {
-                    Text(
-                        text = stringResource(id = R.string.group_id),
-                        color = MaterialTheme.colorScheme.onSecondary
-                    ) },
-                textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                    focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        shadowElevation = 8.dp.toPx()
+                        shape = RoundedCornerShape(12.dp)
+                        clip = false
+                        translationX = -8.dp.toPx() // shift shadow to left
+                        translationY = 8.dp.toPx()  // shift shadow to bottom
+                    }
+            ){
+                OutlinedTextField(
+                    value = groupId,
+                    onValueChange = { groupId = it },
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.group_id),
+                            color = MaterialTheme.colorScheme.onSecondary
+                        ) },
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
 
-            // Username TextField
-            OutlinedTextField(
-                value = userName,
-                onValueChange = { userName = it },
-                label = {
-                    Text(
-                        text = stringResource(id = R.string.username),
-                        color = MaterialTheme.colorScheme.onSecondary
-                    ) },
-                textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                    focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        shadowElevation = 8.dp.toPx()
+                        shape = RoundedCornerShape(12.dp)
+                        clip = false
+                        translationX = -8.dp.toPx() // shift shadow to left
+                        translationY = 8.dp.toPx()  // shift shadow to bottom
+                    }
+            ){
+                // Username TextField
+                OutlinedTextField(
+                    value = userName,
+                    onValueChange = { userName = it },
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.username),
+                            color = MaterialTheme.colorScheme.onSecondary
+                        ) },
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondary
+                        ) },
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+            }
+
+
 
             // Spacer
             Spacer(modifier = Modifier.height(10.dp))
@@ -164,18 +227,29 @@ fun CreateScreen(){
                 horizontalArrangement = Arrangement.End
 
             ) {
+
                 // Cancel Button (Cross Icon)
                 Button(
                     onClick = { /* TODO: cancel action */ },
                     shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .graphicsLayer {
+                            shadowElevation = 8.dp.toPx()
+                            shape = RoundedCornerShape(12.dp)
+                            clip = false
+                            translationX = -8.dp.toPx() // shift shadow to left
+                            translationY = 8.dp.toPx()  // shift shadow to bottom
+                        }
+                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
+                        .size(40.dp)
+
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
-                        modifier = Modifier.size(30.dp),
+                        imageVector = Icons.Filled.Close,
                         contentDescription = "Cancel",
                         tint = MaterialTheme.colorScheme.onSecondary
                     )
@@ -186,15 +260,27 @@ fun CreateScreen(){
                 // Save Button (Tick Icon)
                 Button(
                     onClick = { /* TODO: save action */ },
+
                     shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .graphicsLayer {
+                            shadowElevation = 8.dp.toPx()
+                            shape = RoundedCornerShape(12.dp)
+                            clip = false
+                            translationX = -8.dp.toPx() // shift shadow to left
+                            translationY = 8.dp.toPx()  // shift shadow to bottom
+                        }
+                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
+                        .size(40.dp)
+
+
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
-                        modifier = Modifier.size(30.dp),
+                        imageVector = Icons.Filled.Check,
                         contentDescription = "Save",
                         tint = MaterialTheme.colorScheme.onSecondary
                     )
