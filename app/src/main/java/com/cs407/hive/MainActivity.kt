@@ -4,13 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.cs407.hive.ui.screens.CreateScreen
+import com.cs407.hive.ui.screens.JoinScreen
+import com.cs407.hive.ui.screens.LogInScreen
 import com.cs407.hive.ui.theme.HiveTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +19,42 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HiveTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                AppNavigation()
             }
         }
     }
 }
 
+// Composable function responsible for navigation between screens
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun AppNavigation() {
+    // Creates and remembers a NavController to manage navigation state
+    val navController = rememberNavController()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HiveTheme {
-        Greeting("Android")
+    // NavHost sets up the navigation graph for the app
+    NavHost(
+        navController = navController, // Controller that handles navigation
+        startDestination = "logIn" // First screen to display when app starts
+    ) {
+
+        composable("logIn") {
+            LogInScreen(
+                onNavigateToCreate = { navController.navigate("create")},
+                onNavigateToJoin = { navController.navigate("join") }
+            )
+        }
+        composable("create") {
+            CreateScreen(
+                onNavigateToLogIn = { navController.navigate("logIn") }
+            )
+        }
+        composable("join") {
+            JoinScreen(
+                onNavigateToLogIn = { navController.navigate("logIn") }
+            )
+        }
+
     }
+
+
 }

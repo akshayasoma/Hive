@@ -30,10 +30,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,10 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,7 +54,7 @@ import com.cs407.hive.ui.theme.HiveTheme
 
 
 @Composable
-fun CreateScreen(){
+fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
     var groupId by remember { mutableStateOf(TextFieldValue("")) }
@@ -230,7 +226,7 @@ fun CreateScreen(){
 
                 // Cancel Button (Cross Icon)
                 Button(
-                    onClick = { /* TODO: cancel action */ },
+                    onClick = { onNavigateToLogIn() },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -299,7 +295,9 @@ fun CreateScreen(){
 @Composable
 fun CreateScreenPreviewDark(){
     HiveTheme (dynamicColor = false) {
-        CreateScreen()
+        CreateScreen(
+            onNavigateToLogIn = {}
+        )
     }
 }
 
@@ -312,6 +310,8 @@ fun CreateScreenPreviewDark(){
 @Composable
 fun CreateScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        CreateScreen()
+        CreateScreen(
+            onNavigateToLogIn = {}
+        )
     }
 }

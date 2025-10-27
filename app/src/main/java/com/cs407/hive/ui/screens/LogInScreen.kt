@@ -25,7 +25,7 @@ import com.cs407.hive.ui.theme.HiveTheme
 
 
 @Composable
-fun LogInScreen(){
+fun LogInScreen(onNavigateToCreate: () -> Unit, onNavigateToJoin: () -> Unit) {
 
     Box(
         modifier = Modifier
@@ -38,7 +38,7 @@ fun LogInScreen(){
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Button(
-                onClick = {},
+                onClick = {onNavigateToCreate()},
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(100.dp),      // taller button
@@ -57,7 +57,7 @@ fun LogInScreen(){
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = {},
+                onClick = { onNavigateToJoin() },
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(100.dp),      // taller button
@@ -85,7 +85,10 @@ fun LogInScreen(){
 @Composable
 fun LogInScreenPreview(){
     HiveTheme (dynamicColor = false) {
-        LogInScreen()
+        LogInScreen(
+            onNavigateToCreate = {},
+            onNavigateToJoin = {}
+        )
     }
 }
 
@@ -98,6 +101,9 @@ fun LogInScreenPreview(){
 @Composable
 fun LogInScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        LogInScreen()
+        LogInScreen(
+            onNavigateToCreate = {},
+            onNavigateToJoin = {}
+        )
     }
 }
