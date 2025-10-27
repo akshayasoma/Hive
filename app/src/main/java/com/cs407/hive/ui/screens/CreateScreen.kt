@@ -120,7 +120,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -157,7 +157,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
                             text = stringResource(id = R.string.username),
                             color = MaterialTheme.colorScheme.onSecondary
                         ) },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -220,7 +220,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 
                 // Save Button (Tick Icon)
                 Button(
-                    onClick = { 
+                    onClick = {
 //                        val room = mapOf(
 //                            "groupName" to groupName.text,
 //                            "creatorName" to userName.text,

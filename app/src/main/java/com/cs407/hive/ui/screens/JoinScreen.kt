@@ -116,7 +116,7 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -159,7 +159,7 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
