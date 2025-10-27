@@ -21,3 +21,9 @@ val LightButton = Color(0xFFF8F1E1)
 val DarkText = Color(0xFFBB5927)
 
 val LightText = Color(0xFF634200)
+
+val DarkBottomBar = Color(0xFF856A20)
+
+val LightBottomBar = Color(0xFFF9C901)
+
+
