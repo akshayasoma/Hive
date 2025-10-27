@@ -79,7 +79,7 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit) {
                 modifier = Modifier
                     .graphicsLayer {
                         shadowElevation = 8.dp.toPx()
-                        shape = RoundedCornerShape(12.dp)
+                        shape = CircleShape
                         clip = true
                     }
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
