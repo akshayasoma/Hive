@@ -28,14 +28,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
 import com.google.android.gms.games.leaderboard.Leaderboard
+import com.cs407.hive.R
 
 @Composable
-fun HomeScreen ( ){
+fun HomeScreen (onNavigateToChores: () -> Unit,
+                onNavigateToGrocery: () -> Unit,
+                onNavigateToRecipe: () -> Unit){
 
     Box (
         modifier = Modifier
@@ -48,7 +53,7 @@ fun HomeScreen ( ){
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ){
             Button(
-                onClick = {},
+                onClick = {onNavigateToChores ()},
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(100.dp),      // taller button
@@ -67,7 +72,7 @@ fun HomeScreen ( ){
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = { },
+                onClick = { onNavigateToGrocery() },
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(100.dp),      // taller button
@@ -86,7 +91,7 @@ fun HomeScreen ( ){
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = { },
+                onClick = { onNavigateToRecipe() },
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(100.dp),      // taller button
@@ -126,9 +131,9 @@ fun HomeScreen ( ){
                     modifier = Modifier.size(60.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        painter = painterResource(id=R.drawable.settings_flower),
                         contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onSecondary,
+                        tint = Color.Unspecified,
                         modifier = Modifier.size(50.dp)
 
                     )
@@ -145,7 +150,7 @@ fun HomeScreen ( ){
                     modifier = Modifier.size(60.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Search,
+                        painter = painterResource(id=R.drawable.ic_leaderboard),
                         contentDescription = "Leaderboard",
                         tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(50.dp)
@@ -166,7 +171,9 @@ fun HomeScreen ( ){
 @Composable
 fun HomeScreenPreviewDark() {
     HiveTheme(dynamicColor = false) {
-        HomeScreen()
+        HomeScreen( onNavigateToChores = {},
+                    onNavigateToGrocery = {},
+                    onNavigateToRecipe = {})
     }
 }
 
@@ -179,6 +186,8 @@ fun HomeScreenPreviewDark() {
 @Composable
 fun HomeScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        HomeScreen()
+        HomeScreen(onNavigateToChores = {},
+                    onNavigateToGrocery = {},
+                    onNavigateToRecipe = {})
     }
 }

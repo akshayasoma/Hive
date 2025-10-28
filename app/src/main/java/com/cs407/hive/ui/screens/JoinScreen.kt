@@ -54,7 +54,8 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
 
 @Composable
-fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
+fun JoinScreen(onNavigateToLogIn: () -> Unit,
+               onNavigateToHome: () -> Unit) {
 
     var groupId by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
@@ -308,7 +309,10 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 @Composable
 fun JoinScreenPreviewDark() {
     HiveTheme(dynamicColor = false) {
-        JoinScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
+        JoinScreen(
+            onNavigateToLogIn = {},
+            onNavigateToHome = {}
+        )
     }
 }
 
@@ -321,6 +325,9 @@ fun JoinScreenPreviewDark() {
 @Composable
 fun JoinScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        JoinScreen(onNavigateToLogIn = {}, onNavigateToHome = {})
+        JoinScreen(
+            onNavigateToLogIn = {},
+            onNavigateToHome = {}
+        )
     }
 }
