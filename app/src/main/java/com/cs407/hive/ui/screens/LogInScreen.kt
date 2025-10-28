@@ -25,7 +25,8 @@ import com.cs407.hive.ui.theme.HiveTheme
 
 
 @Composable
-fun LogInScreen(onNavigateToCreate: () -> Unit, onNavigateToJoin: () -> Unit) {
+fun LogInScreen(onNavigateToCreate: () -> Unit,
+                onNavigateToJoin: () -> Unit) {
 
     Box(
         modifier = Modifier
