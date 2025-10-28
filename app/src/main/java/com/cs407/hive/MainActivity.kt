@@ -8,9 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.cs407.hive.ui.screens.ChoresScreen
 import com.cs407.hive.ui.screens.CreateScreen
+import com.cs407.hive.ui.screens.GroceryScreen
+import com.cs407.hive.ui.screens.HomeScreen
 import com.cs407.hive.ui.screens.JoinScreen
 import com.cs407.hive.ui.screens.LogInScreen
+import com.cs407.hive.ui.screens.RecipeScreen
 import com.cs407.hive.ui.theme.HiveTheme
 
 class MainActivity : ComponentActivity() {
@@ -45,14 +49,39 @@ fun AppNavigation() {
         }
         composable("create") {
             CreateScreen(
-                onNavigateToLogIn = { navController.navigate("logIn") }
+                onNavigateToLogIn = { navController.navigate("logIn") },
+                onNavigateToHome = { navController.navigate("home")}
             )
         }
         composable("join") {
             JoinScreen(
-                onNavigateToLogIn = { navController.navigate("logIn") }
+                onNavigateToLogIn = { navController.navigate("logIn")},
+                onNavigateToHome = { navController.navigate("home")}
             )
         }
+        composable("home"){
+            HomeScreen(
+                onNavigateToChores = { navController.navigate("chore")},
+                onNavigateToGrocery = { navController.navigate("grocery")},
+                onNavigateToRecipe = { navController.navigate("recipe")}
+            )
+        }
+        composable("chore"){
+            ChoresScreen(
+                onNavigateToHome = { navController.navigate("home")}
+            )
+        }
+        composable("grocery"){
+            GroceryScreen(
+                onNavigateToHome = { navController.navigate("home")}
+            )
+        }
+        composable("recipe"){
+            RecipeScreen(
+                onNavigateToHome = { navController.navigate("home")}
+            )
+        }
+
 
     }
 
