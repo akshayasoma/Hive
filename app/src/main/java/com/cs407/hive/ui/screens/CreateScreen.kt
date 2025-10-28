@@ -57,7 +57,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
@@ -282,9 +282,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 @Composable
 fun CreateScreenPreviewDark(){
     HiveTheme (dynamicColor = false) {
-        CreateScreen(
-            onNavigateToLogIn = {}
-        )
+        CreateScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
 
@@ -297,8 +295,6 @@ fun CreateScreenPreviewDark(){
 @Composable
 fun CreateScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        CreateScreen(
-            onNavigateToLogIn = {}
-        )
+        CreateScreen(onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
