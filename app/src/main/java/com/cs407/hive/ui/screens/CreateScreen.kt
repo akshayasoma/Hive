@@ -52,7 +52,7 @@ import com.cs407.hive.ui.theme.HiveTheme
 import java.util.UUID
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
@@ -76,7 +76,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
                 modifier = Modifier
                     .graphicsLayer {
                         shadowElevation = 8.dp.toPx()
-                        shape = RoundedCornerShape(12.dp)
+                        shape = CircleShape
                         clip = true
                     }
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
@@ -193,7 +193,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
                     modifier = Modifier
                         .graphicsLayer {
                             shadowElevation = 8.dp.toPx()
-                            shape = RoundedCornerShape(12.dp)
+                            shape = CircleShape
                             clip = false
                             translationX = -8.dp.toPx() // shift shadow to left
                             translationY = 8.dp.toPx()  // shift shadow to bottom
@@ -231,7 +231,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
                     modifier = Modifier
                         .graphicsLayer {
                             shadowElevation = 8.dp.toPx()
-                            shape = RoundedCornerShape(12.dp)
+                            shape = CircleShape
                             clip = false
                             translationX = -8.dp.toPx() // shift shadow to left
                             translationY = 8.dp.toPx()  // shift shadow to bottom
@@ -261,7 +261,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 @Composable
 fun CreateScreenPreviewDark(){
     HiveTheme (dynamicColor = false) {
-        CreateScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
+        CreateScreen (onNavigateToLogIn = {})
     }
 }
 
@@ -274,6 +274,6 @@ fun CreateScreenPreviewDark(){
 @Composable
 fun CreateScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        CreateScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
+        CreateScreen (onNavigateToLogIn = {})
     }
 }
