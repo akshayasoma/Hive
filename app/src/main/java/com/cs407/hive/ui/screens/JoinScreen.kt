@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
 
 @Composable
-fun JoinScreen(onNavigateToLogIn: () -> Unit) {
+fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 
     var groupId by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
@@ -247,7 +247,7 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit) {
 
                     // Save Button
                     Button(
-                        onClick = { /* TODO: save */ },
+                        onClick = { onNavigateToHome() },
                         shape = CircleShape,
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -308,9 +308,7 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit) {
 @Composable
 fun JoinScreenPreviewDark() {
     HiveTheme(dynamicColor = false) {
-        JoinScreen(
-            onNavigateToLogIn = {}
-        )
+        JoinScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
 
@@ -323,8 +321,6 @@ fun JoinScreenPreviewDark() {
 @Composable
 fun JoinScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        JoinScreen(
-            onNavigateToLogIn = {}
-        )
+        JoinScreen(onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }

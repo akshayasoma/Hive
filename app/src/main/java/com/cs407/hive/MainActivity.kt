@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.cs407.hive.ui.screens.CreateScreen
+import com.cs407.hive.ui.screens.HomeScreen
 import com.cs407.hive.ui.screens.JoinScreen
 import com.cs407.hive.ui.screens.LogInScreen
 import com.cs407.hive.ui.theme.HiveTheme
@@ -45,13 +46,19 @@ fun AppNavigation() {
         }
         composable("create") {
             CreateScreen(
-                onNavigateToLogIn = { navController.navigate("logIn") }
+                onNavigateToLogIn = { navController.navigate("logIn") },
+                onNavigateToHome = { navController.navigate("home") }
+
             )
         }
         composable("join") {
-            JoinScreen(
+            JoinScreen (
+                onNavigateToHome = { navController.navigate("home") },
                 onNavigateToLogIn = { navController.navigate("logIn") }
             )
+        }
+        composable("home"){
+            HomeScreen()
         }
 
     }

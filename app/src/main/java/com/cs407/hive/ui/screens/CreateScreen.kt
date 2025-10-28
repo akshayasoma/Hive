@@ -54,7 +54,7 @@ import com.cs407.hive.ui.theme.HiveTheme
 
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
     var groupId by remember { mutableStateOf(TextFieldValue("")) }
@@ -255,7 +255,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 
                 // Save Button (Tick Icon)
                 Button(
-                    onClick = { /* TODO: save action */ },
+                    onClick = { onNavigateToHome()},
 
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
@@ -295,9 +295,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 @Composable
 fun CreateScreenPreviewDark(){
     HiveTheme (dynamicColor = false) {
-        CreateScreen(
-            onNavigateToLogIn = {}
-        )
+        CreateScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
 
@@ -310,8 +308,6 @@ fun CreateScreenPreviewDark(){
 @Composable
 fun CreateScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        CreateScreen(
-            onNavigateToLogIn = {}
-        )
+        CreateScreen(onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
