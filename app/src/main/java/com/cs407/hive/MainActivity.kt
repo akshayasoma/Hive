@@ -50,8 +50,7 @@ fun AppNavigation() {
         composable("create") {
             CreateScreen(
                 onNavigateToLogIn = { navController.navigate("logIn") },
-                onNavigateToHome = { navController.navigate("home")}
-            )
+                )
         }
         composable("join") {
             JoinScreen(
