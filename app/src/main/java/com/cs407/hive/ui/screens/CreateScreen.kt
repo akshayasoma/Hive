@@ -1,9 +1,9 @@
 package com.cs407.hive.ui.screens
 
-
 import com.cs407.hive.R
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -49,16 +49,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
-
-
-
+import java.util.UUID
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit,
-                 onNavigateToHome: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
-    var groupId by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
 
     Box(
@@ -80,7 +76,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
                 modifier = Modifier
                     .graphicsLayer {
                         shadowElevation = 8.dp.toPx()
-                        shape = CircleShape
+                        shape = RoundedCornerShape(12.dp)
                         clip = true
                     }
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
@@ -117,7 +113,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -132,43 +128,6 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
-            }
-
-
-            // Group ID TextField
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        shadowElevation = 8.dp.toPx()
-                        shape = RoundedCornerShape(12.dp)
-                        clip = false
-                        translationX = -8.dp.toPx() // shift shadow to left
-                        translationY = 8.dp.toPx()  // shift shadow to bottom
-                    }
-            ){
-                OutlinedTextField(
-                    value = groupId,
-                    onValueChange = { groupId = it },
-                    label = {
-                        Text(
-                            text = stringResource(id = R.string.group_id),
-                            color = MaterialTheme.colorScheme.onSecondary
-                        ) },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
-                    colors = TextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                        focusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-
             }
 
             Surface(
@@ -191,7 +150,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
                             text = stringResource(id = R.string.username),
                             color = MaterialTheme.colorScheme.onSecondary
                         ) },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -211,8 +170,6 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
                     singleLine = true
                 )
             }
-
-
 
             // Spacer
             Spacer(modifier = Modifier.height(10.dp))
@@ -256,7 +213,15 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
 
                 // Save Button (Tick Icon)
                 Button(
-                    onClick = { onNavigateToHome() },
+                    onClick = { 
+                        val room = mapOf(
+                            "groupName" to groupName.text,
+                            "creatorName" to userName.text,
+                            "groupId" to UUID.randomUUID().toString(),
+                            "peopleList" to listOf(userName.text)
+                        )
+                        Log.d("CreateScreen", "Room created: $room")
+                    },
 
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
@@ -297,8 +262,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit,
 fun CreateScreenPreviewDark(){
     HiveTheme (dynamicColor = false) {
         CreateScreen(
-            onNavigateToLogIn = {},
-            onNavigateToHome = {}
+            onNavigateToLogIn = {}
         )
     }
 }
@@ -313,8 +277,7 @@ fun CreateScreenPreviewDark(){
 fun CreateScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
         CreateScreen(
-            onNavigateToLogIn = {},
-            onNavigateToHome = {}
+            onNavigateToLogIn = {}
         )
     }
 }
