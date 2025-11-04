@@ -79,7 +79,8 @@ fun AppNavigation(
             HomeScreen(
                 onNavigateToChores = { navController.navigate("chore")},
                 onNavigateToGrocery = { navController.navigate("grocery")},
-                onNavigateToRecipe = { navController.navigate("recipe")}
+                onNavigateToRecipe = { navController.navigate("recipe")},
+                onNavigateToSettings = { navController.navigate("settings")}
             )
         }
         composable("chore"){
