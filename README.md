@@ -8,10 +8,10 @@ We will Bee the best :D
 ## Bookkeeping<br>
 ### Week 1
 
-Observer Week 1: N/A Getting Started<br>
-Coordinator Week 1: N/A Getting Started<br>
+Observer: N/A Getting Started<br>
+Coordinator: N/A Getting Started<br>
 
-Week 1 Accomplishments:<br>
+Accomplishments:<br>
 Kavya:<br>
 Glenn:<br>
 Pranav:<br>
@@ -21,10 +21,10 @@ Akshaya: Initial setup of Chores, Groceries, and Recipe screens. Includes basic 
 
 ### Week 2
 
-Observer Week 2: Pranav<br>
-Coordinator Week 2: Kavya<br>
+Observer: Pranav<br>
+Coordinator: Kavya<br>
 
-Week 2 Accomplishments:<br>
+Accomplishments:<br>
 Kavya:<br>
 Glenn:<br>
 Pranav:<br>
