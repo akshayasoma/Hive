@@ -48,6 +48,19 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
             .background(color = MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
+        Box (
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ){
+            Icon(
+                painter = painterResource(id = R.drawable.home_screen_bee),
+                contentDescription = "Bee",
+                tint = Color.Unspecified,
+                modifier = Modifier.size(150.dp)
+                )
+        }
+
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
