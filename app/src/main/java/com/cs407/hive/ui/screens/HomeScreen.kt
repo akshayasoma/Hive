@@ -40,7 +40,9 @@ import com.cs407.hive.R
 @Composable
 fun HomeScreen (onNavigateToChores: () -> Unit,
                 onNavigateToGrocery: () -> Unit,
-                onNavigateToRecipe: () -> Unit){
+                onNavigateToRecipe: () -> Unit,
+                onNavigateToSettings: () -> Unit
+                ){
 
     Box (
         modifier = Modifier
@@ -135,7 +137,7 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
             ) {
                 // Settings Button
                 Button(
-                    onClick = { /* TODO: open settings */ },
+                    onClick = { onNavigateToSettings()},
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -186,7 +188,8 @@ fun HomeScreenPreviewDark() {
     HiveTheme(dynamicColor = false) {
         HomeScreen( onNavigateToChores = {},
                     onNavigateToGrocery = {},
-                    onNavigateToRecipe = {})
+                    onNavigateToRecipe = {},
+                    onNavigateToSettings = {})
     }
 }
 
@@ -201,6 +204,7 @@ fun HomeScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
         HomeScreen(onNavigateToChores = {},
                     onNavigateToGrocery = {},
-                    onNavigateToRecipe = {})
+                    onNavigateToRecipe = {},
+                    onNavigateToSettings = {})
     }
 }

@@ -4,10 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.ui.screens.ChoresScreen
 import com.cs407.hive.ui.screens.CreateScreen
 import com.cs407.hive.ui.screens.GroceryScreen
@@ -15,6 +21,7 @@ import com.cs407.hive.ui.screens.HomeScreen
 import com.cs407.hive.ui.screens.JoinScreen
 import com.cs407.hive.ui.screens.LogInScreen
 import com.cs407.hive.ui.screens.RecipeScreen
+import com.cs407.hive.ui.screens.SettingsScreen
 import com.cs407.hive.ui.theme.HiveTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,8 +29,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            HiveTheme {
-                AppNavigation()
+            //This is not persistent...need to make the user light/dark mode preferences persistent
+            val systemDarkTheme = isSystemInDarkTheme()
+
+            var isDarkTheme by remember { mutableStateOf(systemDarkTheme) }
+
+            HiveTheme(darkTheme = isDarkTheme) {
+                AppNavigation(isDarkTheme = isDarkTheme, onDarkModeChange = { isDarkTheme = it })
             }
         }
     }
@@ -31,7 +43,10 @@ class MainActivity : ComponentActivity() {
 
 // Composable function responsible for navigation between screens
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    isDarkTheme: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
+) {
     // Creates and remembers a NavController to manage navigation state
     val navController = rememberNavController()
 
@@ -64,7 +79,8 @@ fun AppNavigation() {
             HomeScreen(
                 onNavigateToChores = { navController.navigate("chore")},
                 onNavigateToGrocery = { navController.navigate("grocery")},
-                onNavigateToRecipe = { navController.navigate("recipe")}
+                onNavigateToRecipe = { navController.navigate("recipe")},
+                onNavigateToSettings = { navController.navigate("settings")}
             )
         }
         composable("chore"){
@@ -81,6 +97,22 @@ fun AppNavigation() {
             RecipeScreen(
                 onNavigateToHome = { navController.navigate("home")}
             )
+        }
+
+        composable("settings") {
+
+            SettingsScreen(
+                group = GroupRequest(
+                    groupId = "placeholder",
+                    creatorName = "User1",
+                    groupName = "Grp1",
+                    peopleList = listOf()
+                ),
+                onNavigateToHome = { navController.navigate("home") },
+                darkModeState = isDarkTheme,        // passes current theme
+                onDarkModeChange = onDarkModeChange // passes callback to update
+            )
+
         }
 
     }
