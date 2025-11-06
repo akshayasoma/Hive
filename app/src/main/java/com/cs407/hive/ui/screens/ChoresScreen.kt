@@ -5,6 +5,8 @@ import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,6 +30,12 @@ import com.cs407.hive.ui.theme.HiveTheme
 
 @Composable
 fun ChoresScreen(onNavigateToHome: () -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    var choreName by remember { mutableStateOf("") }
+    var points by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -80,15 +88,22 @@ fun ChoresScreen(onNavigateToHome: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            repeat(3) {
-                ChoreCard(
-                    username = "User Icon",
-                    chore = "Chore",
-                    points = "Points",
-                    status = "Status"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 100.dp)
+            ) {
+                items(chores.reversed()) { (name, pts, desc) ->
+                    ChoreCard(
+                        username = "Unassigned",
+                        chore = name,
+                        points = "$pts pts",
+                        status = "To do"
+                    )
+                }
             }
+
         }
 
         BottomAppBar(
@@ -142,7 +157,7 @@ fun ChoresScreen(onNavigateToHome: () -> Unit) {
 
                 // Add Button
                 Button(
-                    onClick = { /* TODO: open add pop-up/modal */ },
+                    onClick = { showDialog = true },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -159,6 +174,66 @@ fun ChoresScreen(onNavigateToHome: () -> Unit) {
                 }
             }
         }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Add a New Chore") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = choreName,
+                            onValueChange = { choreName = it },
+                            label = { Text("Chore Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = points,
+                            onValueChange = { points = it },
+                            label = { Text("Points") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Description") },
+                            singleLine = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (choreName.isNotBlank() && points.isNotBlank()) {
+                            val formattedName = choreName.split(" ")
+                                .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                            chores = chores + Triple(formattedName, points, description)
+                        }
+                        choreName = ""
+                        points = ""
+                        showDialog = false
+                    }) {
+                        Text("Add")
+                    }
+                },
+
+                dismissButton = {
+                    TextButton(onClick = {
+                        choreName = ""
+                        points = ""
+                        showDialog = false
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
     }
 }
 

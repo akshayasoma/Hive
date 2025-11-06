@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,9 +29,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
+import kotlin.collections.plus
 
 @Composable
 fun GroceryScreen(onNavigateToHome: () -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    var itemName by remember { mutableStateOf("") }
+    var isDone by remember { mutableStateOf("false") }
+    var description by remember { mutableStateOf("") }
+    var groceries by remember { mutableStateOf(listOf<Triple<String, Boolean, String>>()) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -82,12 +91,18 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-           repeat(3) {
-                GroceryCard(
-                    Item = "Item",
-                    status = false
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 100.dp)
+            ) {
+                items(groceries.reversed()) { (name, isDone, desc) ->
+                    GroceryCard(
+                        Item = name,
+                        status = false
+                    )
+                }
             }
         }
 
@@ -142,7 +157,7 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
 
                 // Add Button
                 Button(
-                    onClick = { /* TODO: open add pop-up/modal */ },
+                    onClick = { showDialog = true},
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -159,15 +174,67 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
                 }
             }
         }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Add a New Grocery Item") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = itemName,
+                            onValueChange = { itemName = it },
+                            label = { Text("Item Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Description") },
+                            singleLine = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (itemName.isNotBlank()) {
+                            val formattedName = itemName.split(" ")
+                                .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                            groceries = groceries + Triple(formattedName, false, description)
+                        }
+                        itemName = ""
+                        showDialog = false
+                    }) {
+                        Text("Add")
+                    }
+                },
+
+                dismissButton = {
+                    TextButton(onClick = {
+                        itemName = ""
+                        showDialog = false
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun GroceryCard(Item: String, status: Boolean) {
+    var isChecked by remember { mutableStateOf(status) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth(0.9f)
             .height(90.dp)
+            .graphicsLayer { alpha = if (isChecked) 0.75f else 1f }
             .background(
                 color = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(10.dp)
@@ -175,45 +242,29 @@ fun GroceryCard(Item: String, status: Boolean) {
             .padding(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
+            modifier = Modifier.fillMaxHeight()
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Circle “bee” placeholder
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    var isChecked by remember { mutableStateOf(false) }
-                    Checkbox(
-                        checked = isChecked,
-                        onCheckedChange = { isChecked = it },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.onSecondary,
-                            uncheckedColor = MaterialTheme.colorScheme.onSecondary,
-                            checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        modifier = Modifier
-                            .size(40.dp)
-                    )
-                }
+            // Checkbox
+            Checkbox(
+                checked = isChecked,
+                onCheckedChange = { isChecked = it },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.onSecondary,
+                    uncheckedColor = MaterialTheme.colorScheme.onSecondary,
+                    checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier.size(40.dp)
+            )
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column (horizontalAlignment = Alignment.CenterHorizontally){
-                    Text(
-                        text = Item.uppercase(),
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+            Text(
+                text = Item.uppercase(),
+                color = MaterialTheme.colorScheme.onSecondary,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 12.dp)
+            )
         }
     }
 }
