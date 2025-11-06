@@ -43,7 +43,8 @@ import com.cs407.hive.R
 fun HomeScreen (onNavigateToChores: () -> Unit,
                 onNavigateToGrocery: () -> Unit,
                 onNavigateToRecipe: () -> Unit,
-                onNavigateToSettings: () -> Unit
+                onNavigateToSettings: () -> Unit,
+                onNavigateToLeaderboard: () -> Unit
                 ){
 
     Box (
@@ -178,7 +179,7 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
 
                 // Leaderboard Button
                 Button(
-                    onClick = { /* TODO: open leaderboard */ },
+                    onClick = { onNavigateToLeaderboard() },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -211,7 +212,8 @@ fun HomeScreenPreviewDark() {
         HomeScreen( onNavigateToChores = {},
                     onNavigateToGrocery = {},
                     onNavigateToRecipe = {},
-                    onNavigateToSettings = {})
+                    onNavigateToSettings = {},
+                    onNavigateToLeaderboard = {})
     }
 }
 
@@ -227,6 +229,7 @@ fun HomeScreenPreviewLight() {
         HomeScreen(onNavigateToChores = {},
                     onNavigateToGrocery = {},
                     onNavigateToRecipe = {},
-                    onNavigateToSettings = {})
+                    onNavigateToSettings = {},
+                    onNavigateToLeaderboard = {})
     }
 }

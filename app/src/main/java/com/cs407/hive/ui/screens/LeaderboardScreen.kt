@@ -78,7 +78,7 @@ fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
 
             // Header
             Text(
-                text = "Lead ya board",
+                text = "Honeycomb of Fame",
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondary
@@ -86,34 +86,12 @@ fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-//            LBCard(
-//                username = "Winner",
-//                rank = "Queen Bee",
-//                points = "Points",
-//                status = "Status"
-//            )
-//            Spacer(modifier = Modifier.height(16.dp))
-//            LBCard(
-//                username = "Second",
-//                rank = "worker bee",
-//                points = "Points",
-//                status = "Status"
-//            )
-//            Spacer(modifier = Modifier.height(16.dp))
-//            repeat(3) {
-//                LBCard(
-//                    username = "User Icon",
-//                    rank = "drone",
-//                    points = "Points",
-//                    status = "Status"
-//                )
-//                Spacer(modifier = Modifier.height(16.dp))
-//            }
+//
             // LazyColumn for top 10
             val leaderboard = listOf(
                 Triple("Winner", "Queen Bee", "1st Place"),
                 Triple("Second", "Worker Bee", "2nd Place"),
-                Triple("User3", "Drone", "3rd Place"),
+                Triple("Third", "Harvester", "3rd Place"),
                 Triple("User4", "Drone", "4th Place"),
                 Triple("User5", "Drone", "5th Place"),
                 Triple("User6", "Drone", "6th Place"),
@@ -126,18 +104,30 @@ fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 150.dp)
             ) {
                 items(leaderboard.size) { index ->
                     val (username, rank, status) = leaderboard[index]
+
+                    // Adjust width and opacity based on rank
+                    val cardModifier = when (index) {
+                        0 -> Modifier.fillMaxWidth(0.95f).graphicsLayer(alpha = 1f)    // Winner: widest, fully opaque
+                        1 -> Modifier.fillMaxWidth(0.9f).graphicsLayer(alpha = 1f)     // 2nd: slightly narrower
+                        2 -> Modifier.fillMaxWidth(0.85f).graphicsLayer(alpha = 1f)    // 3rd: slightly narrower
+                        else -> Modifier.fillMaxWidth(0.8f).graphicsLayer(alpha = 0.8f) // Others: narrower & 80% opacity
+                    }
+
                     LBCard(
                         username = username,
                         rank = rank,
                         points = "${(1000 - index * 50)} pts",
-                        status = status
+                        status = status,
+                        modifier = cardModifier
                     )
                 }
             }
+
         }
 
         BottomAppBar(
@@ -145,14 +135,6 @@ fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
             containerColor = MaterialTheme.colorScheme.onTertiary,
             tonalElevation = 8.dp
         ) {
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 20.dp),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -190,16 +172,23 @@ fun getBeeProfileImage(role: String): Painter {
         "queen bee" -> painterResource(id = R.drawable.profile_queen_bee)
         "worker" -> painterResource(id = R.drawable.profile_cool_bee)
         "worker bee" -> painterResource(id = R.drawable.profile_cool_bee)
+        "harvester" -> painterResource(id = R.drawable.profile_honey_bee)
+        "harvester bee" -> painterResource(id = R.drawable.profile_honey_bee)
         else -> painterResource(id = R.drawable.profile_drone_bee)
     }
 }
 
 @Composable
-fun LBCard(username: String, rank: String, points: String, status: String) {
-    var img = getBeeProfileImage(rank)
+fun LBCard(
+    username: String,
+    rank: String,
+    points: String,
+    status: String,
+    modifier: Modifier = Modifier
+) {
+    val img = getBeeProfileImage(rank)
     Box(
-        modifier = Modifier
-            .fillMaxWidth(0.9f)
+        modifier = modifier
             .height(90.dp)
             .background(
                 color = MaterialTheme.colorScheme.onPrimary,
@@ -213,7 +202,6 @@ fun LBCard(username: String, rank: String, points: String, status: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Circle “bee” placeholder
                 Box(
                     modifier = Modifier
                         .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
@@ -222,11 +210,6 @@ fun LBCard(username: String, rank: String, points: String, status: String) {
                         .background(MaterialTheme.colorScheme.onPrimary),
                     contentAlignment = Alignment.Center
                 ) {
-//                    Text(
-//                        text = "🐝",
-//                        color = MaterialTheme.colorScheme.onSecondary,
-//                        fontSize = 26.sp
-//                    )
                     Image(
                         painter = img,
                         contentDescription = "Bee icon",
@@ -267,6 +250,7 @@ fun LBCard(username: String, rank: String, points: String, status: String) {
         }
     }
 }
+
 
 @Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
 @Composable

@@ -19,6 +19,7 @@ import com.cs407.hive.ui.screens.CreateScreen
 import com.cs407.hive.ui.screens.GroceryScreen
 import com.cs407.hive.ui.screens.HomeScreen
 import com.cs407.hive.ui.screens.JoinScreen
+import com.cs407.hive.ui.screens.LeaderboardScreen
 import com.cs407.hive.ui.screens.LogInScreen
 import com.cs407.hive.ui.screens.RecipeScreen
 import com.cs407.hive.ui.screens.SettingsScreen
@@ -81,7 +82,8 @@ fun AppNavigation(
                 onNavigateToChores = { navController.navigate("chore")},
                 onNavigateToGrocery = { navController.navigate("grocery")},
                 onNavigateToRecipe = { navController.navigate("recipe")},
-                onNavigateToSettings = { navController.navigate("settings")}
+                onNavigateToSettings = { navController.navigate("settings")},
+                onNavigateToLeaderboard = { navController.navigate("leaderboard")}
             )
         }
         composable("chore"){
@@ -114,6 +116,12 @@ fun AppNavigation(
                 onDarkModeChange = onDarkModeChange // passes callback to update
             )
 
+        }
+
+        composable("leaderboard"){
+            LeaderboardScreen (
+                onNavigateToHome = { navController.navigate("home")}
+            )
         }
 
     }
