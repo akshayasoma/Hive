@@ -1,5 +1,6 @@
 package com.cs407.hive.ui.screens
 
+import android.content.Intent
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.Image
@@ -51,14 +52,17 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.ui.theme.HiveTheme
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun SettingsScreen(
@@ -122,6 +126,7 @@ fun SettingsScreen(
                     expanded = showDropdown,
                     onDismissRequest = { showDropdown = false },
                     modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+
                 ) {
                     profileOptions.forEach { pic ->
                         DropdownMenuItem(
@@ -135,7 +140,7 @@ fun SettingsScreen(
                                     painter = painterResource(id = pic),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(40.dp)
+                                        .size(45.dp)
                                         .clip(CircleShape)
                                 )
                             }
@@ -197,6 +202,7 @@ fun SettingsScreen(
                         enabled = editable
                     )
 
+                    val context = LocalContext.current
                     // grp id field
                     OutlinedTextField(
                         value = TextFieldValue(currentGroupId),
@@ -213,7 +219,29 @@ fun SettingsScreen(
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        enabled = false
+                        enabled = false,
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowOutward,
+                                contentDescription = "Share Group ID",
+                                tint = MaterialTheme.colorScheme.onSecondary,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable {
+                                        val sendIntent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(
+                                                Intent.EXTRA_TEXT,
+                                                "Join my Hive group! Group ID: $currentGroupId"
+                                            )
+                                            type = "text/plain"
+                                        }
+                                        val shareIntent = Intent.createChooser(sendIntent, null)
+                                        context.startActivity(shareIntent)
+                                    }
+
+                            )
+                        }
                     )
 
                     // Dark Mode Switch
