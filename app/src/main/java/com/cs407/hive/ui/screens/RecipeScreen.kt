@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
 
 @Composable
-fun RecipeScreen(onNavigateToHome: () -> Unit) {
+fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -104,7 +104,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = { /* TODO: enable delete mode */ },
+                    onClick = {onNavigateToCamera()},
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -114,7 +114,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CameraAlt,
-                        contentDescription = "Delete",
+                        contentDescription = "Camera",
                         tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(50.dp)
 

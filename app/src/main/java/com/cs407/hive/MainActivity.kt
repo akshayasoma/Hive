@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.cs407.hive.ui.screens.CameraScreen
 import com.cs407.hive.ui.screens.ChoresScreen
 import com.cs407.hive.ui.screens.CreateScreen
 import com.cs407.hive.ui.screens.GroceryScreen
@@ -77,7 +78,15 @@ fun AppNavigation() {
         }
         composable("recipe"){
             RecipeScreen(
-                onNavigateToHome = { navController.navigate("home")}
+                onNavigateToHome = { navController.navigate("home")},
+                onNavigateToCamera = { navController.navigate("camera")}
+
+            )
+        }
+        // New camera screen route
+        composable("camera") {
+            CameraScreen(
+                onNavigateToRecipe = { navController.navigate("recipe")}
             )
         }
 

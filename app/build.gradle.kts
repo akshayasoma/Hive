@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -17,6 +19,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Expose Perplexity API key at runtime via BuildConfig
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(localPropsFile.inputStream())
+        }
+        fun String.stripQuotes(): String = this.trim().removePrefix("\"").removeSuffix("\"").removePrefix("'").removeSuffix("'")
+        val perplexityKeyRaw = (localProps.getProperty("PERPLEXITY_API_KEY") ?: "")
+        val perplexityKey = perplexityKeyRaw.stripQuotes()
+        buildConfigField("String", "PERPLEXITY_API_KEY", "\"$perplexityKey\"")
+    }
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -52,6 +68,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.games)
+
+    // Lifecycle Compose utilities (collectAsStateWithLifecycle)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -59,7 +79,26 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation("androidx.compose.material3:material3:1.2.0")
-    implementation("androidx.compose.material:material-icons-extended:<latest-version>")
 
+    // Compose Material (icons)
+    implementation(libs.androidx.compose.material.icons.extended)
+
+    // ViewModel for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Networking (use version catalog)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+
+    // CameraX
+    val cameraxVersion = "1.3.0"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:1.5.1")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation(libs.androidx.camera.view)
+    implementation("androidx.camera:camera-extensions:$cameraxVersion")
 }
