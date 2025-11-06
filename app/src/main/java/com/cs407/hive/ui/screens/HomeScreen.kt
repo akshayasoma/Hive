@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -29,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,19 +52,15 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
             .background(color = MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Box (
-            modifier = Modifier
-                .fillMaxWidth(),
-            contentAlignment = Alignment.TopCenter
-        ){
-            Icon(
-                painter = painterResource(id = R.drawable.home_screen_bee),
-                contentDescription = "Bee",
-                tint = Color.Unspecified,
-                modifier = Modifier.size(150.dp)
-                )
-        }
 
+        Icon(
+            painter = painterResource(id = R.drawable.home_screen_bee),
+            contentDescription = "Bee",
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .size(150.dp)
+                .offset(x = 0.dp, y = -235.dp).graphicsLayer(scaleX = -1f) // move right and down
+        )
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -103,6 +101,8 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
                 )
             }
 
+
+
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
@@ -122,6 +122,28 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
                 )
             }
         }
+
+        Box (
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopStart
+        ){
+            Icon(
+                painter = painterResource(id = R.drawable.home_screen_bee),
+                contentDescription = "Bee",
+                tint = Color.Unspecified,
+                modifier = Modifier.size(75.dp)
+            )
+        }
+        Icon(
+            painter = painterResource(id = R.drawable.home_screen_bee),
+            contentDescription = "Bee",
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .size(75.dp)
+                .offset(x = 150.dp, y = 160.dp).graphicsLayer(scaleX = -1f) // move right and down
+        )
+
 
         BottomAppBar(
             modifier = Modifier.align(Alignment.BottomCenter),
