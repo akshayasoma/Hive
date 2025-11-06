@@ -40,7 +40,9 @@ import com.cs407.hive.R
 @Composable
 fun HomeScreen (onNavigateToChores: () -> Unit,
                 onNavigateToGrocery: () -> Unit,
-                onNavigateToRecipe: () -> Unit){
+                onNavigateToRecipe: () -> Unit,
+                onNavigateToSettings: () -> Unit
+                ){
 
     Box (
         modifier = Modifier
@@ -48,6 +50,19 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
             .background(color = MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
+        Box (
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ){
+            Icon(
+                painter = painterResource(id = R.drawable.home_screen_bee),
+                contentDescription = "Bee",
+                tint = Color.Unspecified,
+                modifier = Modifier.size(150.dp)
+                )
+        }
+
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -122,7 +137,7 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
             ) {
                 // Settings Button
                 Button(
-                    onClick = { /* TODO: open settings */ },
+                    onClick = { onNavigateToSettings()},
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -173,7 +188,8 @@ fun HomeScreenPreviewDark() {
     HiveTheme(dynamicColor = false) {
         HomeScreen( onNavigateToChores = {},
                     onNavigateToGrocery = {},
-                    onNavigateToRecipe = {})
+                    onNavigateToRecipe = {},
+                    onNavigateToSettings = {})
     }
 }
 
@@ -188,6 +204,7 @@ fun HomeScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
         HomeScreen(onNavigateToChores = {},
                     onNavigateToGrocery = {},
-                    onNavigateToRecipe = {})
+                    onNavigateToRecipe = {},
+                    onNavigateToSettings = {})
     }
 }

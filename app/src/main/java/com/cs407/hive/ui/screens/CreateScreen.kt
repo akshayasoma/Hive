@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,14 +49,20 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cs407.hive.data.model.GroupRequest
+import com.cs407.hive.data.network.ApiClient
+import com.cs407.hive.ui.screens.CreateScreen
 import com.cs407.hive.ui.theme.HiveTheme
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
+
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -76,7 +83,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
                 modifier = Modifier
                     .graphicsLayer {
                         shadowElevation = 8.dp.toPx()
-                        shape = RoundedCornerShape(12.dp)
+                        shape = CircleShape
                         clip = true
                     }
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
@@ -113,7 +120,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -150,7 +157,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
                             text = stringResource(id = R.string.username),
                             color = MaterialTheme.colorScheme.onSecondary
                         ) },
-                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onPrimary),
+                    textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                     colors = TextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -213,14 +220,28 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 
                 // Save Button (Tick Icon)
                 Button(
-                    onClick = { 
-                        val room = mapOf(
-                            "groupName" to groupName.text,
-                            "creatorName" to userName.text,
-                            "groupId" to UUID.randomUUID().toString(),
-                            "peopleList" to listOf(userName.text)
-                        )
-                        Log.d("CreateScreen", "Room created: $room")
+                    onClick = {
+//                        val room = mapOf(
+//                            "groupName" to groupName.text,
+//                            "creatorName" to userName.text,
+//                            "groupId" to UUID.randomUUID().toString(),
+//                            "peopleList" to listOf(userName.text)
+//                        )
+                        scope.launch {
+                            try {
+                                val room = GroupRequest(
+                                    groupName = groupName.text,
+                                    creatorName = userName.text,
+                                    groupId = UUID.randomUUID().toString(),
+                                    peopleList = listOf(userName.text)
+                                )
+                                ApiClient.instance.createGroup(room)
+                                Log.d("CreateScreen", "Group saved to MongoDB")
+                            } catch (e: Exception) {
+                                Log.e("CreateScreen", "Error: ${e.message}")
+                            }
+                        }
+//                        Log.d("CreateScreen", "Room created: $room")
                     },
 
                     shape = CircleShape,
@@ -261,9 +282,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit) {
 @Composable
 fun CreateScreenPreviewDark(){
     HiveTheme (dynamicColor = false) {
-        CreateScreen(
-            onNavigateToLogIn = {}
-        )
+        CreateScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
 
@@ -276,8 +295,6 @@ fun CreateScreenPreviewDark(){
 @Composable
 fun CreateScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        CreateScreen(
-            onNavigateToLogIn = {}
-        )
+        CreateScreen(onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
