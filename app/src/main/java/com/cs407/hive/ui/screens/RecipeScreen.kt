@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -28,9 +31,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
+import kotlin.collections.plus
 
 @Composable
 fun RecipeScreen(onNavigateToHome: () -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    var ingredientName by remember { mutableStateOf("") }
+    var ingredients by remember { mutableStateOf(listOf<String>()) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -83,12 +91,36 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            repeat(3) {
-                RecipeCard(
-                    Item = "Item"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = 150.dp)
+            ) {
+                items(ingredients.reversed()) { ingredient ->
+                    RecipeCard(Item = ingredient)
+                }
             }
+        }
+        Button(
+            onClick = { /* TODO: Add logic */ },
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 125.dp)
+                .height(55.dp)
+                .width(200.dp)
+                .shadow(elevation = 10.dp, shape = RoundedCornerShape(50))
+        ) {
+            Text(
+                text = "Find Recipe",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         BottomAppBar(
@@ -142,7 +174,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
 
                 // Add Button
                 Button(
-                    onClick = { /* TODO: open add pop-up/modal */ },
+                    onClick = { showDialog = true },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -158,6 +190,42 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
                     )
                 }
             }
+        }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Add a New Ingredient") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = ingredientName,
+                            onValueChange = { ingredientName = it },
+                            label = { Text("Ingredient Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (ingredientName.isNotBlank()) {
+                            ingredients = ingredients + ingredientName.trim().replaceFirstChar { it.uppercase() }
+                        }
+                        ingredientName = ""
+                        showDialog = false
+                    }) {
+                        Text("Add")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        ingredientName = ""
+                        showDialog = false
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
