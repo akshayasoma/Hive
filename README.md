@@ -28,7 +28,7 @@ Coordinator: Kavya<br>
 
 #### Accomplishments:
 Kavya:<br>
-Glenn:Setup a backend server and established a connection from Android to NodeJS. Updated the manifest to allow for internet access and setup the backend server to allow for requests. Android -> Node -> MongoDB pipeline. Made the sign-up button actually create a new group on MongoDB.
+Glenn:Setup a backend server and established a connection from Android to NodeJS. Updated the manifest to allow for internet access and setup the backend server to allow for requests. Android -> Node -> MongoDB pipeline. Made the sign-up button actually create a new group on MongoDB.<br>
 Pranav:<br>
 Akshaya:<br>
 
