@@ -2,6 +2,7 @@ package com.cs407.hive.ui.screens
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.net.http.HttpException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,11 +23,45 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
+import android.provider.Settings
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.cs407.hive.data.network.ApiClient
+import kotlinx.coroutines.launch
+import java.io.IOException
+import androidx.compose.runtime.getValue
+
 
 
 @Composable
 fun LogInScreen(onNavigateToCreate: () -> Unit,
-                onNavigateToJoin: () -> Unit) {
+                onNavigateToJoin: () -> Unit, onNavigateToHome: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+    var isChecking by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = ApiClient.instance.checkLogin(mapOf("deviceId" to deviceId))
+                if (response.message.contains("already in a group", ignoreCase = true)) {
+                    onNavigateToHome()
+                } else {
+                    isChecking = false
+                }
+            } catch (e: IOException) {
+                isChecking = false
+            } catch (e: HttpException) {
+                isChecking = false
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -88,7 +123,8 @@ fun LogInScreenPreview(){
     HiveTheme (dynamicColor = false) {
         LogInScreen(
             onNavigateToCreate = {},
-            onNavigateToJoin = {}
+            onNavigateToJoin = {},
+            onNavigateToHome = {}
         )
     }
 }
@@ -104,7 +140,8 @@ fun LogInScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
         LogInScreen(
             onNavigateToCreate = {},
-            onNavigateToJoin = {}
+            onNavigateToJoin = {},
+            onNavigateToHome = {}
         )
     }
 }

@@ -17,6 +17,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log("Connected to MongoDB"))
 .catch(err => console.error("MongoDB connection error:", err));
 
+
 // schema
 const groupSchema = new mongoose.Schema({
   groupName: String,
@@ -27,10 +28,36 @@ const groupSchema = new mongoose.Schema({
 
 const Group = mongoose.model("Group", groupSchema);
 
+app.post("/api/checkLogin", async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    const existingGroup = await Group.findOne({ peopleList: deviceId });
+    if (existingGroup) {
+      res.status(200).json({ message: "User already in a group", existingGroup });
+    } else {
+      res.status(200).json({ message: "User not in a group" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // route
 app.post("/api/groups", async (req, res) => {
   try {
     const { groupName, creatorName, groupId, peopleList } = req.body;
+    if (!peopleList || peopleList.length === 0) {
+          return res.status(400).json({ error: "peopleList (deviceId) required" });
+    }
+    const deviceId = peopleList[0];
+
+    // Optionally: check if user already has a group
+    const existingGroup = await Group.findOne({ peopleList: deviceId });
+    console.log("Existing group: ", existingGroup)
+    if (existingGroup) {
+      return res.status(200).json({ message: "User already in a group", existingGroup });
+    }
+
     const group = new Group({ groupName, creatorName, groupId, peopleList });
     await group.save();
     res.status(201).json({ message: "Group created", group });

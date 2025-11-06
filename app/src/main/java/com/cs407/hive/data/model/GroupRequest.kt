@@ -6,3 +6,8 @@ data class GroupRequest(
     val groupId: String,
     val peopleList: List<String>
 )
+
+data class CheckLoginResponse(
+    val message: String,
+    val existingGroup: GroupRequest? = null
+)

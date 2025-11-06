@@ -1,7 +1,10 @@
 package com.cs407.hive.data.network
 
+import com.cs407.hive.data.model.GroupRequest
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.POST
 
 object ApiClient {
     val instance: HiveApi by lazy {
@@ -11,4 +14,7 @@ object ApiClient {
             .build()
             .create(HiveApi::class.java)
     }
+
+
 }
+

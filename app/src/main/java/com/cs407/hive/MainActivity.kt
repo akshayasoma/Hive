@@ -59,7 +59,8 @@ fun AppNavigation(
         composable("logIn") {
             LogInScreen(
                 onNavigateToCreate = { navController.navigate("create")},
-                onNavigateToJoin = { navController.navigate("join") }
+                onNavigateToJoin = { navController.navigate("join") },
+                onNavigateToHome = { navController.navigate("home") }
             )
         }
         composable("create") {
