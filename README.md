@@ -14,7 +14,7 @@ Coordinator: N/A Getting Started<br>
 
 #### Accomplishments:
 Kavya:<br>
-Glenn: Initialized the database and setup a connection between Hive and MongoDB. Setup a backend server and established a connection from Android to NodeJS. Updated the manifest to allow for internet access and setup the backend server to allow for requests. Android -> Node -> MongoDB pipeline. Made the sign-up button actually create a new group on MongoDB.
+Glenn: Initialized the database and setup a connection between Hive and MongoDB. 
 Pranav:<br>
 Akshaya: Initial setup of Chores, Groceries, and Recipe screens. Includes basic hardcoded UI and navigation <br>
 
@@ -28,7 +28,7 @@ Coordinator: Kavya<br>
 
 #### Accomplishments:
 Kavya:<br>
-Glenn:<br>
+Glenn:Setup a backend server and established a connection from Android to NodeJS. Updated the manifest to allow for internet access and setup the backend server to allow for requests. Android -> Node -> MongoDB pipeline. Made the sign-up button actually create a new group on MongoDB.
 Pranav:<br>
 Akshaya:<br>
 
