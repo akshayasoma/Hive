@@ -9,12 +9,20 @@ import android.graphics.Bitmap
 class PerplexityRepository(
     private val api: PerplexityApi = PerplexityApi(BuildConfig.PERPLEXITY_API_KEY)
 ) {
-    suspend fun analyzeBitmap(bitmap: Bitmap, prompt: String = "Describe what's in this photo and list notable items."): String = withContext(Dispatchers.IO) {
+    suspend fun analyzeBitmap(bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
         val key = BuildConfig.PERPLEXITY_API_KEY.trim()
-        require(key.isNotEmpty()) { "Missing PERPLEXITY_API_KEY. Add it to local.properties." }
         val base64 = bitmap.compressToBase64()
-        val model = "sonar"
+        val model = "sonar-pro"
         api.askAboutImage(base64Jpeg = base64, prompt = prompt, model = model)
+    }
+
+    // text-only ask wrapper that forwards to PerplexityApi.ask
+    suspend fun askPrompt(
+        prompt: String,
+        model: String = "sonar-pro"
+    ): String = withContext(Dispatchers.IO) {
+        val key = BuildConfig.PERPLEXITY_API_KEY.trim()
+        api.ask(prompt = prompt, model = model)
     }
 }
 

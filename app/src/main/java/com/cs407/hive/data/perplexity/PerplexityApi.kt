@@ -81,6 +81,33 @@ class PerplexityApi(
         val text = response.choices.firstOrNull()?.message?.content?.trim()
         return text ?: ""
     }
+
+    /**
+     * Ask Perplexity with a text-only prompt (no image data). Returns the assistant's textual response.
+     */
+    suspend fun ask(
+        prompt: String,
+        model: String = "sonar-pro",
+        temperature: Double = 0.2,
+        topP: Double = 0.9
+    ): String {
+        val content = listOf(
+            mapOf("type" to "text", "text" to prompt)
+        )
+
+        val request = ChatCompletionRequest(
+            model = model,
+            messages = listOf(
+                ChatMessage(role = "user", content = content)
+            ),
+            temperature = temperature,
+            topP = topP
+        )
+
+        val response = service.chatCompletions(request)
+        val text = response.choices.firstOrNull()?.message?.content?.trim()
+        return text ?: ""
+    }
 }
 
 // ---- Retrofit service and DTOs ----
