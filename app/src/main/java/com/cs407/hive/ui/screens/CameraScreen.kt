@@ -59,7 +59,7 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewModel: CameraViewModel = viewModel()
-    val prompt = "What do you see? First rate the content out of 10. Then, give a simple title to the image. Finally, talk about the image in detail, describing any objects, people, scenery, and notable features present. Separate each section using a ; and do not include headers. For example: '8;Sunset over mountains;The image shows a beautiful sunset over a range of mountains with vibrant colors in the sky...'"
+    val prompt = "What do you see? First rate the content out of 10. Then, give a simple title to the image. Finally, talk about the image in detail, describing any objects, people, scenery, and notable features present. Separate each section using a ; and do not include headers. Also do not use the ; anywhere else. For example: '8;Sunset over mountains;The image shows a beautiful sunset over a range of mountains with vibrant colors in the sky...'"
     var hasCameraPermission by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
