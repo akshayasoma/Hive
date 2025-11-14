@@ -2,14 +2,20 @@ package com.cs407.hive.ui.screens
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
@@ -26,7 +32,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,6 +51,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     var ingredientName by remember { mutableStateOf("") }
     var ingredients by remember { mutableStateOf(listOf<String>()) }
+    var showInfo by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -58,8 +72,6 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                var showInfo by remember { mutableStateOf(false) }
-
                 Button(
                     onClick = { showInfo = !showInfo },
                     shape = CircleShape,
@@ -227,6 +239,116 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
                 }
             )
         }
+        //info box
+        AnimatedVisibility(
+            visible = showInfo,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            val addIconId = Icons.Default.Add
+            val cameraIconId = Icons.Filled.CameraAlt
+
+            val addIconKey = "addIcon"
+            val cameraIconKey = "cameraIcon"
+
+            val infoText = buildAnnotatedString {
+                withStyle(SpanStyle(fontSize = 16.sp)) {
+                    append("• Tap ")
+                    appendInlineContent(addIconKey, "[add]")
+                    append(" to manually enter ingredients\n")
+                }
+
+                withStyle(SpanStyle(fontSize = 16.sp)) {
+                    append("• Tap ")
+                    appendInlineContent(cameraIconKey, "[camera]")
+                    append(" to scan ingredients with the camera")
+                }
+
+                val subBullet = "◦ Tap on recipe card to view the full recipe"
+                addStyle(
+                    style = ParagraphStyle(
+                        textIndent = TextIndent(firstLine = 24.sp, restLine = 34.sp),
+                        lineHeight = 20.sp
+                    ),
+                    start = length,
+                    end = length + subBullet.length
+                )
+                append(subBullet)
+            }
+
+            val inlineContent = mapOf(
+                addIconKey to InlineTextContent(
+                    Placeholder(
+                        width = 18.sp,
+                        height = 18.sp,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                    )
+                ) {
+                    Icon(
+                        imageVector = addIconId,
+                        contentDescription = "Add",
+                        tint = MaterialTheme.colorScheme.onSecondary
+                    )
+                },
+                cameraIconKey to InlineTextContent(
+                    Placeholder(
+                        width = 18.sp,
+                        height = 18.sp,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                    )
+                ) {
+                    Icon(
+                        imageVector = cameraIconId,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.onSecondary
+                    )
+                }
+            )
+            // background
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f))
+                    .clickable { showInfo = false }
+            )
+
+            // info card
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    tonalElevation = 12.dp,
+                    modifier = Modifier
+                        .padding(28.dp)
+                        .clickable(enabled = false) {}
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "HOW TO USE",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = infoText,
+                            inlineContent = inlineContent,
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
+        }
+
     }
 }
 
