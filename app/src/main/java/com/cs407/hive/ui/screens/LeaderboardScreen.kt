@@ -47,38 +47,38 @@ fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Info icon (top left)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                var showInfo by remember { mutableStateOf(false) }
+            // Info icon (top left) (I don't think we need one for this screen-Kavya)
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.Start
+//            ) {
+//                var showInfo by remember { mutableStateOf(false) }
+//
+//                Button(
+//                    onClick = { showInfo = !showInfo },
+//                    shape = CircleShape,
+//                    contentPadding = PaddingValues(0.dp),
+//                    colors = ButtonDefaults.buttonColors(
+//                        containerColor = MaterialTheme.colorScheme.onPrimary
+//                    ),
+//                    modifier = Modifier
+//                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
+//                        .size(40.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Filled.Info,
+//                        contentDescription = "Info",
+//                        tint = MaterialTheme.colorScheme.onSecondary
+//                    )
+//                }
+//            }
 
-                Button(
-                    onClick = { showInfo = !showInfo },
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    modifier = Modifier
-                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
-                        .size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = "Info",
-                        tint = MaterialTheme.colorScheme.onSecondary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             // Header
             Text(
-                text = "Honeycomb of Fame",
+                text = "LEADERBOARD\n",
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondary
