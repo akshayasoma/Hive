@@ -51,12 +51,14 @@ fun AppNavigation() {
         composable("create") {
             CreateScreen(
                 onNavigateToLogIn = { navController.navigate("logIn") },
-                )
+                onNavigateToHome = { navController.navigate("home") }
+
+            )
         }
         composable("join") {
-            JoinScreen(
-                onNavigateToLogIn = { navController.navigate("logIn")},
-                onNavigateToHome = { navController.navigate("home")}
+            JoinScreen (
+                onNavigateToHome = { navController.navigate("home") },
+                onNavigateToLogIn = { navController.navigate("logIn") }
             )
         }
         composable("home"){
@@ -71,11 +73,13 @@ fun AppNavigation() {
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
+
         composable("grocery"){
             GroceryScreen(
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
+
         composable("recipe"){
             RecipeScreen(
                 onNavigateToHome = { navController.navigate("home")},
@@ -83,13 +87,12 @@ fun AppNavigation() {
 
             )
         }
-        // New camera screen route
+
         composable("camera") {
             CameraScreen(
                 onNavigateToRecipe = { navController.navigate("recipe")}
             )
         }
-
 
     }
 

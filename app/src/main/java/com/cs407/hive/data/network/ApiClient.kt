@@ -1,0 +1,14 @@
+package com.cs407.hive.data.network
+
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+object ApiClient {
+    val instance: HiveApi by lazy {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:3000/") // change to your server base URL
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(HiveApi::class.java)
+    }
+}
