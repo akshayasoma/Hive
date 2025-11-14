@@ -43,7 +43,7 @@ Coordinator: <br>
 #### Accomplishments:
 Kavya:Added the info box content and its fade in fade out animation.<br>
 Glenn:<br>
-Pranav:<br>
+Pranav: Added text-only AI services and refined the prompt for usage in the app. Also added some optimizations to the build process.<br>
 Akshaya:<br>
 
 <br>
