@@ -23,10 +23,23 @@ const groupSchema = new mongoose.Schema({
   groupName: String,
   creatorName: String,
   groupId: String,
+  creatorId: String,
   peopleList: [String]
 });
 
 const Group = mongoose.model("Group", groupSchema);
+
+// User schema
+const userSchema = new mongoose.Schema({
+  userId: String,        // deviceId
+  name: String,          // userName
+  preferences: {
+                   type: Object,
+                   default: {}
+                 },
+});
+
+const User = mongoose.model("User", userSchema);
 
 app.post("/api/checkLogin", async (req, res) => {
   try {
@@ -45,26 +58,64 @@ app.post("/api/checkLogin", async (req, res) => {
 // route
 app.post("/api/groups", async (req, res) => {
   try {
-    const { groupName, creatorName, groupId, peopleList } = req.body;
-    if (!peopleList || peopleList.length === 0) {
-          return res.status(400).json({ error: "peopleList (deviceId) required" });
+    const { groupName, creatorName, groupId, creatorId } = req.body;
+//    if (!peopleList || peopleList.length === 0) {
+//          return res.status(400).json({ error: "peopleList (deviceId) required" });
+//    }
+//    const deviceId = peopleList[0];
+
+    // Create user profile if it doesn't exist
+    let user = await User.findOne({ userId: creatorId });
+
+    if (!user) {
+      user = new User({
+        userId: creatorId,
+        name: creatorName,
+      });
+
+      await user.save();
     }
-    const deviceId = peopleList[0];
 
     // Optionally: check if user already has a group
-    const existingGroup = await Group.findOne({ peopleList: deviceId });
+    const existingGroup = await Group.findOne({ peopleList: creatorId });
     console.log("Existing group: ", existingGroup)
     if (existingGroup) {
       return res.status(200).json({ message: "User already in a group", existingGroup });
     }
 
-    const group = new Group({ groupName, creatorName, groupId, peopleList });
+    const group = new Group({ groupName, creatorName, groupId, creatorId, peopleList : [creatorId] });
     await group.save();
     res.status(201).json({ message: "Group created", group });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.post("/api/user/get", async (req, res) => {
+  try {
+    console.log("YES GETTING USER")
+    const { userId } = req.body;
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/get", async (req, res) => {
+  try {
+    console.log("YES GETTING GROUP.")
+    const { groupId } = req.body;
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    res.json({ group });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 // start server
 app.listen(3000, () => console.log("Server running on port 3000"));

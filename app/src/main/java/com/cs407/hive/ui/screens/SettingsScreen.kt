@@ -3,6 +3,7 @@ package com.cs407.hive.ui.screens
 import android.content.Intent
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -62,21 +63,61 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import com.cs407.hive.data.model.GroupDetail
+import com.cs407.hive.data.model.UserDetail
+import com.cs407.hive.data.network.ApiClient
 
 @Composable
 fun SettingsScreen(
-    group: GroupRequest,
+    deviceId: String,
+    groupId: String,
     onNavigateToHome: () -> Unit,
     darkModeState: Boolean,
     onDarkModeChange: (Boolean) -> Unit
 ) {
 
+    Log.d("SettingsScreen", "Composable started with deviceId=$deviceId groupId=$groupId")
+
     var editable by remember { mutableStateOf(false) }
     var darkMode by remember { mutableStateOf(darkModeState) }
-    var currentUserName by remember { mutableStateOf(group.creatorName) }
-    var currentGroupName by remember { mutableStateOf(group.groupName) }
-    var currentGroupId by remember { mutableStateOf(group.groupId) }
+
+
+    // 1) These hold the live database data
+    var user by remember { mutableStateOf<UserDetail?>(null) }
+    var group by remember { mutableStateOf<GroupDetail?>(null) }
+
+    // 2) Load from backend ONCE when the composable first appears
+    LaunchedEffect(Unit) {
+        try {
+            Log.d("SettingsScreen", "LaunchedEffect STARTED")
+            val userResp = ApiClient.instance.getUser(mapOf("userId" to deviceId))
+            Log.d("SettingsScreen", "Fetched user = ${userResp.user}")
+            user = userResp.user
+
+            val groupResp = ApiClient.instance.getGroup(mapOf("groupId" to groupId))
+            Log.d("SettingsScreen", "Fetched group = ${groupResp.group}")
+            group = groupResp.group
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    if (user == null || group == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Loading...", color = MaterialTheme.colorScheme.onSecondary)
+        }
+        return
+    }
+
+    var currentUserName by remember { mutableStateOf(user!!.name) }
+    var currentGroupName by remember { mutableStateOf(group!!.groupName) }
+//    var currentGroupId by remember { mutableStateOf(group.groupId) }
+    val currentGroupId = group!!.groupId
     var selectedProfilePic by remember { mutableStateOf(R.drawable.ai_bee) }
     var showDropdown by remember { mutableStateOf(false) }
 
@@ -207,7 +248,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = TextFieldValue(currentGroupId),
                         onValueChange = {
-                            currentGroupId = it.text
+
                         }, //Need to connect to db to change to a new grp if possible
                         label = { Text("Group ID", color = MaterialTheme.colorScheme.onSecondary) },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
@@ -399,12 +440,15 @@ fun SettingsScreenPreviewLight() {
     var darkMode by remember { mutableStateOf(false) }
     HiveTheme(darkTheme = darkMode) {
         SettingsScreen(
-            group = GroupRequest(
-                groupId = "placeholder",
-                creatorName = "User1",
-                groupName = "Grp1",
-                peopleList = listOf()
-            ),
+//            group = GroupRequest(
+//                groupId = "placeholder",
+//                creatorName = "User1",
+//                groupName = "Grp1",
+//                creatorId = "placeholder",
+////                peopleList = listOf()
+//            ),
+            deviceId = "placeholder",
+            groupId = "placeholder",
             onNavigateToHome = {},
             darkModeState = darkMode,
             onDarkModeChange = { darkMode = it }
@@ -422,12 +466,15 @@ fun SettingsScreenPreviewLight() {
 fun SettingsScreenPreviewDark() {
     HiveTheme {
         SettingsScreen(
-            group = GroupRequest(
-                groupId = "placeholder",
-                creatorName = "User1",
-                groupName = "Grp1",
-                peopleList = listOf()
-            ),
+//            group = GroupRequest(
+//                groupId = "placeholder",
+//                creatorName = "User1",
+//                groupName = "Grp1",
+//                creatorId = "placeholder",
+////                peopleList = listOf()
+//            ),
+            deviceId = "placeholder",
+            groupId = "placeholder",
             onNavigateToHome = {},
             darkModeState = true,
             onDarkModeChange = {}

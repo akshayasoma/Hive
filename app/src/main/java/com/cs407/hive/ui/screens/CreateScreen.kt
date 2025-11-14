@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Unit) {
 
     val context = LocalContext.current
 
@@ -239,11 +239,12 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
                                     groupName = groupName.text,
                                     creatorName = userName.text,
                                     groupId = UUID.randomUUID().toString(),
-                                    peopleList = listOf(deviceId)
+                                    creatorId = deviceId
+//                                    peopleList = listOf(deviceId)
                                 )
                                 ApiClient.instance.createGroup(room)
                                 Log.d("CreateScreen", "Group saved to MongoDB")
-                                onNavigateToHome()
+                                onNavigateToHome(room.groupId)
                             } catch (e: Exception) {
                                 Log.e("CreateScreen", "Error: ${e.message}")
                             }
