@@ -41,7 +41,7 @@ Observer: <br>
 Coordinator: <br>
 
 #### Accomplishments:
-Kavya:<br>
+Kavya:Added the info box content and its fade in fade out animation.<br>
 Glenn:<br>
 Pranav:<br>
 Akshaya:<br>
