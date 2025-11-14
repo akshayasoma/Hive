@@ -377,7 +377,6 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
             }
         }
 
-        // Add Ingredient Dialog (Simple - like your original)
         if (showAddIngredientDialog) {
             AlertDialog(
                 onDismissRequest = { showAddIngredientDialog = false },
@@ -415,7 +414,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
             )
         }
 
-        // Recipe Detail Dialog
+
         if (showRecipeDetail && selectedRecipe != null) {
             RecipeDetailDialog(
                 recipe = selectedRecipe!!,
@@ -426,7 +425,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
             )
         }
 
-        // Sort Options Dialog
+
         if (showSortOptions) {
             Dialog(onDismissRequest = { showSortOptions = false }) {
                 Surface(
