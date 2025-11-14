@@ -10,7 +10,6 @@ class PerplexityRepository(
     private val api: PerplexityApi = PerplexityApi(BuildConfig.PERPLEXITY_API_KEY)
 ) {
     suspend fun analyzeBitmap(bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
-        val key = BuildConfig.PERPLEXITY_API_KEY.trim()
         val base64 = bitmap.compressToBase64()
         val model = "sonar-pro"
         api.askAboutImage(base64Jpeg = base64, prompt = prompt, model = model)
@@ -18,10 +17,9 @@ class PerplexityRepository(
 
     // text-only ask wrapper that forwards to PerplexityApi.ask
     suspend fun askPrompt(
-        prompt: String,
-        model: String = "sonar-pro"
+        prompt: String
     ): String = withContext(Dispatchers.IO) {
-        val key = BuildConfig.PERPLEXITY_API_KEY.trim()
+        val model = "sonar-pro"
         api.ask(prompt = prompt, model = model)
     }
 }

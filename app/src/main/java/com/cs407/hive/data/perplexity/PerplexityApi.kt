@@ -17,10 +17,6 @@ class PerplexityApi(
     private val apiKey: String,
     baseUrl: String = "https://api.perplexity.ai/"
 ) {
-    init {
-        require(apiKey.isNotBlank()) { "PERPLEXITY_API_KEY is blank. Add it to local.properties as PERPLEXITY_API_KEY=<key>." }
-    }
-
     private val service: PerplexityService by lazy {
         val key = apiKey.trim()
         val authInterceptor = Interceptor { chain ->
