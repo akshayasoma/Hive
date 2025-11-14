@@ -1,13 +1,12 @@
 package com.cs407.hive.data.perplexity
 
-import com.cs407.hive.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import android.graphics.Bitmap
 
 class PerplexityRepository(
-    private val api: PerplexityApi = PerplexityApi(BuildConfig.PERPLEXITY_API_KEY)
+    private val api: PerplexityApi = PerplexityApi("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")
 ) {
     suspend fun analyzeBitmap(bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
         val base64 = bitmap.compressToBase64()

@@ -1,5 +1,4 @@
 import org.gradle.kotlin.dsl.implementation
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -20,16 +19,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Expose Perplexity API key at runtime via BuildConfig
-        val localProps = Properties()
-        val localPropsFile = rootProject.file("local.properties")
-        if (localPropsFile.exists()) {
-            localProps.load(localPropsFile.inputStream())
-        }
-        fun String.stripQuotes(): String = this.trim().removePrefix("\"").removeSuffix("\"").removePrefix("'").removeSuffix("'")
-        val perplexityKeyRaw = (localProps.getProperty("PERPLEXITY_API_KEY") ?: "")
-        val perplexityKey = perplexityKeyRaw.stripQuotes()
-        buildConfigField("String", "PERPLEXITY_API_KEY", "\"$perplexityKey\"")
     }
     buildFeatures {
         buildConfig = true
