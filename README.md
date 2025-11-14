@@ -42,7 +42,7 @@ Coordinator: Kavya<br>
 
 #### Accomplishments:
 Kavya:Added the info box content and its fade in fade out animation.<br>
-Glenn:<br>
+Glenn:Re-did the initial MongoDB Schema for Hive. Added a schema to store user data and have the data connected by their deviceid. Added a sharedPreferences Datastore for groupid and username. Settings are now able to populate username, groupname, and groupid without being hardcoded. Adjusted the create button such that it creates a Hive with the new schema and creates a User data if the deviceid isn't already registered.<br>
 Pranav: Added text-only AI services and refined the prompt for usage in the app. Also added some optimizations to the build process.<br>
 Akshaya: Reworked the RecipeScreens UI completely. Can add ingredients, click "Find Recipe," which now shows (hardcoded) recipes. Each recipe card has Dish name, difficulty level, and duration, which you can sort by. Clicking on each card, opens a pop-up with the Dish's ingredient list with quantities and the instructions.<br>
 
