@@ -56,7 +56,7 @@ Coordinator: Glenn<br>
 
 #### Accomplishments:
 Kavya: Completely redesigned the homescreen of the app. First created the design on Canva and then implemented it in the app. Added the custom font Cooper BT Bold to improve the visual appeal. Created a bee flying around a hive animation using Lottie, added the required dependency, and incorporated the animation on the Create and Join screens.<br>
-Glenn:<br>
+Glenn: Added in new settings integrations. Deleting hive and changing hive+user settings now work.<br>
 Pranav:Worked on recipe creation systems and worked on the text only interface for the recipe generation. Still in progress with prompting and enhancements.<br>
 Akshaya:All pop-ups/alert dialog boxes are color coded with the theme. This includes Chores, Groceries, Recipe, and Settings. Chore cards and Grocery cards are now expandable when clicked to see description. Grocery card fades when the checkbox is checked to visually see completion.<br>
 
