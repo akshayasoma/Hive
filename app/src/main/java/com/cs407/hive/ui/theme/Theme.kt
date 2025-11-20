@@ -21,6 +21,7 @@ private val DarkColorScheme = darkColorScheme(
     onSecondary = DarkText,
     onTertiary = DarkBottomBar,
     onPrimaryContainer = DarkButton,
+    onSecondaryContainer = LightButton
 )
 
 private val LightColorScheme = lightColorScheme(

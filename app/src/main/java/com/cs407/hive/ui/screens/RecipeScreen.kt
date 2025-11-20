@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -273,7 +274,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
                     item {
                         if (myIngredients.isEmpty()) {
                             Text(
-                                text = "Add ingredients and click 'Find Recipes' to get suggestions!",
+                                text = "Add ingredients you have to find recipes!",
                                 color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
                                 fontSize = 16.sp,
                                 modifier = Modifier.padding(32.dp)
@@ -385,6 +386,11 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
         }
 
         if (showAddIngredientDialog) {
+            val textColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
             AlertDialog(
                 onDismissRequest = { showAddIngredientDialog = false },
                 title = { Text("Add a New Ingredient") },
@@ -393,31 +399,66 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
                         OutlinedTextField(
                             value = ingredientName,
                             onValueChange = { ingredientName = it },
-                            label = { Text("Ingredient Name") },
+                            label = { Text("Ingredient Name", color = textColor) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 },
                 confirmButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiary
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         if (ingredientName.isNotBlank()) {
                             myIngredients = myIngredients + ingredientName.trim().replaceFirstChar { it.uppercase() }
                         }
                         ingredientName = ""
                         showAddIngredientDialog = false
-                    }) {
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Add")
                     }
                 },
                 dismissButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         ingredientName = ""
                         showAddIngredientDialog = false
-                    }) {
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Cancel")
                     }
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
 
