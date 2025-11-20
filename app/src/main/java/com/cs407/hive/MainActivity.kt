@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.cs407.hive.ui.screens.CameraScreen
 import com.cs407.hive.data.local.loadGroupId
 import com.cs407.hive.data.local.saveGroupId
 import com.cs407.hive.data.model.GroupRequest
@@ -143,14 +144,24 @@ fun AppNavigation(
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
+
         composable("grocery"){
             GroceryScreen(
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
+
         composable("recipe"){
             RecipeScreen(
-                onNavigateToHome = { navController.navigate("home")}
+                onNavigateToHome = { navController.navigate("home")},
+                onNavigateToCamera = { navController.navigate("camera")}
+
+            )
+        }
+
+        composable("camera") {
+            CameraScreen(
+                onNavigateToRecipe = { navController.navigate("recipe")}
             )
         }
 
