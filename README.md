@@ -51,22 +51,22 @@ Akshaya: Reworked the RecipeScreens UI completely. Can add ingredients, click "F
 ### Week 4
 
 #### Roles:
-Observer: <br>
-Coordinator: <br>
+Observer: Akshaya<br>
+Coordinator: Glenn<br>
 
 #### Accomplishments:
 Kavya: Completely redesigned the homescreen of the app. First created the design on Canva and then implemented it in the app. Added the custom font Cooper BT Bold to improve the visual appeal. Created a bee flying around a hive animation using Lottie, added the required dependency, and incorporated the animation on the Create and Join screens.<br>
 Glenn:<br>
 Pranav:<br>
-Akshaya:<br>
+Akshaya:All pop-ups/alert dialog boxes are color coded with the theme. This includes Chores, Groceries, Recipe, and Settings. Chore cards and Grocery cards are now expandable when clicked to see description. Grocery card fades when the checkbox is checked to visually see completion.<br>
 
 <br>
 
 ### Week 5
 
 #### Roles:
-Observer: <br>
-Coordinator: <br>
+Observer: Akshaya<br>
+Coordinator: Glenn<br>
 
 #### Accomplishments:
 Kavya:<br>
