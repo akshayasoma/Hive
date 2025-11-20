@@ -45,6 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+//import androidx.compose.ui.text.font.FontVariation.Settings
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,9 +60,12 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
-fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
+fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Unit) {
+
+    val context = LocalContext.current
 
     var groupName by remember { mutableStateOf(TextFieldValue("")) }
+    val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     var userName by remember { mutableStateOf(TextFieldValue("")) }
 
     val scope = rememberCoroutineScope()
@@ -233,10 +239,12 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
                                     groupName = groupName.text,
                                     creatorName = userName.text,
                                     groupId = UUID.randomUUID().toString(),
-                                    peopleList = listOf(userName.text)
+                                    creatorId = deviceId
+//                                    peopleList = listOf(deviceId)
                                 )
                                 ApiClient.instance.createGroup(room)
                                 Log.d("CreateScreen", "Group saved to MongoDB")
+                                onNavigateToHome(room.groupId)
                             } catch (e: Exception) {
                                 Log.e("CreateScreen", "Error: ${e.message}")
                             }
