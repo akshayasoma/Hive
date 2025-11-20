@@ -138,88 +138,135 @@ app.post("/api/groups", async (req, res) => {
 });
 
 app.post("/api/user/get", async (req, res) => {
-  try {
-    console.log("YES GETTING USER")
-    const { userId } = req.body;
-    const user = await User.findOne({ userId });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ user });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        console.log("YES GETTING USER")
+        const { userId } = req.body;
+        const user = await User.findOne({ userId });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json({ user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.post("/api/group/get", async (req, res) => {
-  try {
-    console.log("YES GETTING GROUP.")
-    const { groupId } = req.body;
-    const group = await Group.findOne({ groupId });
-    if (!group) return res.status(404).json({ error: "Group not found" });
-    res.json({ group });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        console.log("YES GETTING GROUP.")
+        const { groupId } = req.body;
+        const group = await Group.findOne({ groupId });
+        if (!group) return res.status(404).json({ error: "Group not found" });
+        res.json({ group });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.post("/api/group/addGrocery", async (req, res) => {
-  try {
-    const { groupId, deviceId, name, description = "", quantity = 1 } = req.body;
+    try {
+        const { groupId, deviceId, name, description = "", quantity = 1 } = req.body;
 
-    if (!groupId || !deviceId || !name) {
-      return res.status(400).json({ error: "groupId, deviceId, and name are required" });
+        if (!groupId || !deviceId || !name) {
+          return res.status(400).json({ error: "groupId, deviceId, and name are required" });
+        }
+
+        const group = await Group.findOne({ groupId });
+        if (!group) return res.status(404).json({ error: "Group not found" });
+
+        // AUTH CHECK
+        if (!group.peopleList.includes(deviceId)) {
+          return res.status(403).json({ error: "User not authorized for this group" });
+        }
+
+        group.groceries.push({
+          name,
+          description,
+          quantity
+        });
+
+        await group.save();
+        res.status(200).json({ message: "Grocery added", groceries: group.groceries });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    const group = await Group.findOne({ groupId });
-    if (!group) return res.status(404).json({ error: "Group not found" });
-
-    // AUTH CHECK
-    if (!group.peopleList.includes(deviceId)) {
-      return res.status(403).json({ error: "User not authorized for this group" });
-    }
-
-    group.groceries.push({
-      name,
-      description,
-      quantity
-    });
-
-    await group.save();
-    res.status(200).json({ message: "Grocery added", groceries: group.groceries });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
 app.post("/api/group/addChore", async (req, res) => {
-  try {
-    const { groupId, deviceId, name, description = "", points = 0 } = req.body;
+    try {
+        const { groupId, deviceId, name, description = "", points = 0 } = req.body;
 
-    if (!groupId || !deviceId || !name) {
-      return res.status(400).json({ error: "groupId, deviceId, and name are required" });
+        if (!groupId || !deviceId || !name) {
+          return res.status(400).json({ error: "groupId, deviceId, and name are required" });
+        }
+
+        const group = await Group.findOne({ groupId });
+        if (!group) return res.status(404).json({ error: "Group not found" });
+
+        // AUTH CHECK
+        if (!group.peopleList.includes(deviceId)) {
+          return res.status(403).json({ error: "User not authorized for this group" });
+        }
+
+        group.chores.push({
+          name,
+          description,
+          points
+        });
+
+        await group.save();
+        res.status(200).json({ message: "Chore added", chores: group.chores });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    const group = await Group.findOne({ groupId });
-    if (!group) return res.status(404).json({ error: "Group not found" });
-
-    // AUTH CHECK
-    if (!group.peopleList.includes(deviceId)) {
-      return res.status(403).json({ error: "User not authorized for this group" });
-    }
-
-    group.chores.push({
-      name,
-      description,
-      points
-    });
-
-    await group.save();
-    res.status(200).json({ message: "Chore added", chores: group.chores });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
+app.post("/api/group/updateName", async (req, res) => {
+    try {
+        console.log("Changing Group Name!")
+        const { groupId, deviceId, newName } = req.body;
 
+        // Validate that it is a valid request
+        if (!groupId || !deviceId || !newName)
+          return res.status(400).json({ error: "Missing fields" });
+
+        // Find the requested group
+        const group = await Group.findOne({ groupId });
+        if (!group) return res.status(404).json({ error: "Group not found" });
+
+        // Make sure the user is in the group
+        if (!group.peopleList.includes(deviceId))
+          return res.status(403).json({ error: "Not authorized" });
+
+        group.groupName = newName;
+        await group.save();
+
+        res.json({ message: "Group name updated", group });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post("/api/user/updateName", async (req, res) => {
+    try {
+        console.log("Changing Username!")
+        const { userId, newName } = req.body;
+
+        // Make sure valid parameters passed in
+        if (!userId || !newName)
+          return res.status(400).json({ error: "Missing fields" });
+
+        // Make sure the user actually exists
+        const user = await User.findOne({ userId });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Set and save the new name
+        user.name = newName;
+        await user.save();
+
+        res.json({ message: "Username updated", user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 
 // start server

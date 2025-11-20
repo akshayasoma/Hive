@@ -57,6 +57,7 @@ dependencies {
 
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -90,4 +91,8 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.7")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    //Lottie Animation
+    implementation("com.airbnb.android:lottie-compose:6.5.2")
+
 }

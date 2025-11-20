@@ -29,7 +29,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -66,6 +65,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,6 +74,8 @@ import com.cs407.hive.MainActivity
 import com.cs407.hive.data.local.clearGroupId
 import com.cs407.hive.data.local.saveGroupId
 import com.cs407.hive.data.model.GroupDetail
+import com.cs407.hive.data.model.UpdateGroupNameRequest
+import com.cs407.hive.data.model.UpdateUserNameRequest
 import com.cs407.hive.data.model.UserDetail
 import com.cs407.hive.data.network.ApiClient
 import kotlinx.coroutines.launch
@@ -103,7 +105,9 @@ fun SettingsScreen(
 
     // 1) These hold the live database data
     var user by remember { mutableStateOf<UserDetail?>(null) }
+    var userOrig by remember { mutableStateOf<UserDetail?>(null) }
     var group by remember { mutableStateOf<GroupDetail?>(null) }
+    var groupOrig by remember { mutableStateOf<GroupDetail?>(null) }
 
     // 2) Load from backend ONCE when the composable first appears
     LaunchedEffect(Unit) {
@@ -112,10 +116,12 @@ fun SettingsScreen(
             val userResp = ApiClient.instance.getUser(mapOf("userId" to deviceId))
             Log.d("SettingsScreen", "Fetched user = ${userResp.user}")
             user = userResp.user
+            userOrig = userResp.user
 
             val groupResp = ApiClient.instance.getGroup(mapOf("groupId" to groupId))
             Log.d("SettingsScreen", "Fetched group = ${groupResp.group}")
             group = groupResp.group
+            groupOrig = groupResp.group
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -223,8 +229,8 @@ fun SettingsScreen(
                 ) {
                     //user name text field
                     OutlinedTextField(
-                        value = TextFieldValue(currentUserName),
-                        onValueChange = { currentUserName = it.text },
+                        value = currentUserName,
+                        onValueChange = { currentUserName = it },
                         label = { Text("Username", color = MaterialTheme.colorScheme.onSecondary) },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                         colors = TextFieldDefaults.colors(
@@ -240,8 +246,8 @@ fun SettingsScreen(
 
                     //grp name field
                     OutlinedTextField(
-                        value = TextFieldValue(currentGroupName),
-                        onValueChange = { currentGroupName = it.text },
+                        value = currentGroupName,
+                        onValueChange = { currentGroupName = it},
                         label = {
                             Text(
                                 "Group Name",
@@ -264,9 +270,7 @@ fun SettingsScreen(
                     // grp id field
                     OutlinedTextField(
                         value = TextFieldValue(currentGroupId),
-                        onValueChange = {
-
-                        }, //Need to connect to db to change to a new grp if possible
+                        onValueChange = {}, //Read Only
                         label = { Text("Group ID", color = MaterialTheme.colorScheme.onSecondary) },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                         colors = TextFieldDefaults.colors(
@@ -351,7 +355,49 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 AssistChip(
-                    onClick = { editable = !editable },
+                    onClick = {
+                        if (editable) {
+                            scope.launch {
+                                try {
+                                    val userChanged = currentUserName != userOrig!!.name
+                                    val groupChanged = currentGroupName != groupOrig!!.groupName
+
+                                    if (!userChanged && !groupChanged) {
+                                        editable = false
+                                        return@launch
+                                    }
+
+                                    if (userChanged) {
+                                        ApiClient.instance.updateUserName(
+                                            UpdateUserNameRequest(
+                                                userId = deviceId,
+                                                newName = currentUserName
+                                            )
+                                        )
+                                    }
+
+                                    if (groupChanged) {
+                                        ApiClient.instance.updateGroupName(
+                                            UpdateGroupNameRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                newName = currentGroupName
+                                            )
+                                        )
+                                    }
+
+                                    // Update local originals to reflect successful save
+                                    if (userChanged) userOrig = userOrig!!.copy(name = currentUserName)
+                                    if (groupChanged) groupOrig = groupOrig!!.copy(groupName = currentGroupName)
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                        editable = !editable
+
+                    },
                     label = {
                         Text(
                             if (editable) "Save" else "Edit",
@@ -374,15 +420,20 @@ fun SettingsScreen(
         }
 
         if (showDialog) {
+            val textColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Delete Hive?") },
+                title = { Text("Delete Hive?", color = MaterialTheme.colorScheme.onSecondary) },
                 text = {
                     Column {
                         OutlinedTextField(
                             value = deletionIntent,
                             onValueChange = { deletionIntent = it },
-                            label = { Text("Type: I want this gone!") },
+                            label = { Text("Type: I want this gone!", color = textColor) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -390,6 +441,17 @@ fun SettingsScreen(
                     }
                 },
                 confirmButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiary
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         if (deletionIntent == "I want this gone!") {
                             scope.launch {
@@ -414,19 +476,43 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                    }) {
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Add")
                     }
                 },
 
                 dismissButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         deletionIntent = ""
                         showDialog = false
-                    }) {
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Cancel")
                     }
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
 

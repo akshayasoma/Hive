@@ -4,11 +4,14 @@ import android.R.attr.checked
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,10 +49,14 @@ import kotlin.collections.plus
 fun GroceryScreen(onNavigateToHome: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     var itemName by remember { mutableStateOf("") }
-    var isDone by remember { mutableStateOf("false") }
+    var isDone by remember { mutableStateOf(false) }
     var description by remember { mutableStateOf("") }
     var groceries by remember { mutableStateOf(listOf<Triple<String, Boolean, String>>()) }
     var showInfo by remember { mutableStateOf(false) }
+
+    val (completedGroceries, notCompletedGroceries) = remember(groceries) {
+        groceries.partition { it.second } // it.second is the isDone boolean
+    }
 
     Box(
         modifier = Modifier
@@ -107,11 +114,30 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(groceries.reversed()) { (name, isDone, desc) ->
-                    GroceryCard(
-                        Item = name,
-                        status = false
-                    )
+                if (notCompletedGroceries.isNotEmpty() || completedGroceries.isNotEmpty()) {
+                    items(notCompletedGroceries.reversed()) { (name, isDone, desc) ->
+                        GroceryCard(
+                            item = name,
+                            status = isDone,
+                            description = desc
+                        )
+                    }
+                    items(completedGroceries.reversed()) { (name, isDone, desc) ->
+                        GroceryCard(
+                            item = name,
+                            status = isDone,
+                            description = desc
+                        )
+                    }
+                } else {
+                    item {
+                        Text(
+                            text = "No groceries yet! Add groceries using the button below!",
+                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(32.dp)
+                        )
+                    }
                 }
             }
         }
@@ -185,15 +211,26 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
             }
         }
         if (showDialog) {
+            val textColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
+
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Add a New Grocery Item") },
+                title = {
+                    Text(
+                        "Add a New Grocery Item",
+                        color = MaterialTheme.colorScheme.onSecondary
+                    )
+                },
                 text = {
                     Column {
                         OutlinedTextField(
                             value = itemName,
                             onValueChange = { itemName = it },
-                            label = { Text("Item Name") },
+                            label = { Text("Item Name", color = textColor) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -201,7 +238,7 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
                         OutlinedTextField(
                             value = description,
                             onValueChange = { description = it },
-                            label = { Text("Description") },
+                            label = { Text("Description", color = textColor) },
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -210,27 +247,67 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = {
-                        if (itemName.isNotBlank()) {
-                            val formattedName = itemName.split(" ")
-                                .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                            groceries = groceries + Triple(formattedName, false, description)
-                        }
-                        itemName = ""
-                        showDialog = false
-                    }) {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiary
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
+
+                    TextButton(
+                        onClick = {
+                            if (itemName.isNotBlank()) {
+                                val formattedName = itemName.split(" ")
+                                    .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                                groceries = groceries + Triple(formattedName, false, description)
+                            }
+                            itemName = ""
+                            description = ""
+                            showDialog = false
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Add")
                     }
                 },
-
                 dismissButton = {
-                    TextButton(onClick = {
-                        itemName = ""
-                        showDialog = false
-                    }) {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
+
+                    TextButton(
+                        onClick = {
+                            itemName = ""
+                            description = ""
+                            showDialog = false
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Cancel")
                     }
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
 
@@ -337,44 +414,77 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
 }
 
 @Composable
-fun GroceryCard(Item: String, status: Boolean) {
+fun GroceryCard(item: String, status: Boolean, description: String) {
     var isChecked by remember { mutableStateOf(status) }
+    var isExpanded by remember { mutableStateOf(false) }
 
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth(0.9f)
-            .height(90.dp)
-            .graphicsLayer { alpha = if (isChecked) 0.75f else 1f }
-            .background(
-                color = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .padding(12.dp)
+            .clickable { isExpanded = !isExpanded }
+            .graphicsLayer {
+                alpha = if (isChecked) 0.6f else 1f
+            },
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start,
-            modifier = Modifier.fillMaxHeight()
+        Column(
+            modifier = Modifier.padding(12.dp)
         ) {
-            // Checkbox
-            Checkbox(
-                checked = isChecked,
-                onCheckedChange = { isChecked = it },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.onSecondary,
-                    uncheckedColor = MaterialTheme.colorScheme.onSecondary,
-                    checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                modifier = Modifier.size(40.dp)
-            )
+            // Always visible section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Checkbox
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = { isChecked = it },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.onSecondary,
+                        uncheckedColor = MaterialTheme.colorScheme.onSecondary,
+                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier.size(40.dp)
+                )
 
-            Text(
-                text = Item.uppercase(),
-                color = MaterialTheme.colorScheme.onSecondary,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 12.dp)
-            )
+                Text(
+                    text = item.uppercase(),
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 12.dp)
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded && description.isNotBlank(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, start = 52.dp)
+                ) {
+                    Text(
+                        text = "Description:",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = description,
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
         }
     }
 }
