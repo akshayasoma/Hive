@@ -53,3 +53,14 @@ data class DeleteGroupRequest(
     val groupId: String,
     val deviceId: String
 )
+
+data class UpdateUserNameRequest(
+    val userId: String,
+    val newName: String
+)
+
+data class UpdateGroupNameRequest(
+    val groupId: String,
+    val deviceId: String,
+    val newName: String
+)

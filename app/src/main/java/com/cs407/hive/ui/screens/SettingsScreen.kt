@@ -74,6 +74,8 @@ import com.cs407.hive.MainActivity
 import com.cs407.hive.data.local.clearGroupId
 import com.cs407.hive.data.local.saveGroupId
 import com.cs407.hive.data.model.GroupDetail
+import com.cs407.hive.data.model.UpdateGroupNameRequest
+import com.cs407.hive.data.model.UpdateUserNameRequest
 import com.cs407.hive.data.model.UserDetail
 import com.cs407.hive.data.network.ApiClient
 import kotlinx.coroutines.launch
@@ -103,7 +105,9 @@ fun SettingsScreen(
 
     // 1) These hold the live database data
     var user by remember { mutableStateOf<UserDetail?>(null) }
+    var userOrig by remember { mutableStateOf<UserDetail?>(null) }
     var group by remember { mutableStateOf<GroupDetail?>(null) }
+    var groupOrig by remember { mutableStateOf<GroupDetail?>(null) }
 
     // 2) Load from backend ONCE when the composable first appears
     LaunchedEffect(Unit) {
@@ -112,10 +116,12 @@ fun SettingsScreen(
             val userResp = ApiClient.instance.getUser(mapOf("userId" to deviceId))
             Log.d("SettingsScreen", "Fetched user = ${userResp.user}")
             user = userResp.user
+            userOrig = userResp.user
 
             val groupResp = ApiClient.instance.getGroup(mapOf("groupId" to groupId))
             Log.d("SettingsScreen", "Fetched group = ${groupResp.group}")
             group = groupResp.group
+            groupOrig = groupResp.group
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -351,7 +357,49 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 AssistChip(
-                    onClick = { editable = !editable },
+                    onClick = {
+                        if (editable) {
+                            scope.launch {
+                                try {
+                                    val userChanged = currentUserName != userOrig!!.name
+                                    val groupChanged = currentGroupName != groupOrig!!.groupName
+
+                                    if (!userChanged && !groupChanged) {
+                                        editable = false
+                                        return@launch
+                                    }
+
+                                    if (userChanged) {
+                                        ApiClient.instance.updateUserName(
+                                            UpdateUserNameRequest(
+                                                userId = deviceId,
+                                                newName = currentUserName
+                                            )
+                                        )
+                                    }
+
+                                    if (groupChanged) {
+                                        ApiClient.instance.updateGroupName(
+                                            UpdateGroupNameRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                newName = currentGroupName
+                                            )
+                                        )
+                                    }
+
+                                    // Update local originals to reflect successful save
+                                    if (userChanged) userOrig = userOrig!!.copy(name = currentUserName)
+                                    if (groupChanged) groupOrig = groupOrig!!.copy(groupName = currentGroupName)
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                        editable = !editable
+
+                    },
                     label = {
                         Text(
                             if (editable) "Save" else "Edit",
