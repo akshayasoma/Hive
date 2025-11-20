@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 //import androidx.compose.ui.text.font.FontVariation.Settings
 import android.provider.Settings
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -88,21 +89,20 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
             Box(
                 modifier = Modifier
                     .graphicsLayer {
-                        shadowElevation = 8.dp.toPx()
+                        shadowElevation = 20.dp.toPx()
                         shape = CircleShape
                         clip = true
                     }
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onPrimary),
+                    .background(color = if (isSystemInDarkTheme())
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f) // dark mode, more transparent
+                    else
+                        MaterialTheme.colorScheme.onPrimary ), //light mode same as text field color
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "LOGO",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 35.sp
-                )
+                BeeAnimation()
             }
 
             Surface(
