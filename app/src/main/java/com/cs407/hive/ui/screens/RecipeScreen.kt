@@ -23,10 +23,15 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.ParagraphStyle
@@ -54,7 +59,7 @@ data class RecipeNote(
 )
 
 @Composable
-fun RecipeScreen(onNavigateToHome: () -> Unit) {
+fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = {}) {
     var showAddIngredientDialog by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
     var showRecipeDetail by remember { mutableStateOf(false) }
@@ -129,6 +134,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        // Main content column
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -136,6 +142,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            // Info icon (top left)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -324,7 +331,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = { /* TODO: camera scanning logic */ },
+                    onClick = {onNavigateToCamera()},
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
