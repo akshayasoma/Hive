@@ -55,7 +55,7 @@ Observer: <br>
 Coordinator: <br>
 
 #### Accomplishments:
-Kavya:<br>
+Kavya: Completely redesigned the homescreen of the app. First created the design on Canva and then implemented it in the app. Added the custom font Cooper BT Bold to improve the visual appeal. Created a bee flying around a hive animation using Lottie, added the required dependency, and incorporated the animation on the Create and Join screens.<br>
 Glenn:<br>
 Pranav:<br>
 Akshaya:<br>
