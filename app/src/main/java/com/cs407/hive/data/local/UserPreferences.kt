@@ -19,6 +19,12 @@ suspend fun saveGroupId(context: Context, groupId: String) {
     }
 }
 
+suspend fun clearGroupId(context: Context) {
+    context.dataStore.edit { prefs ->
+        prefs.remove(UserPrefsKeys.GROUP_ID)
+    }
+}
+
 suspend fun loadGroupId(context: Context): String? {
     val prefs = context.dataStore.data.first()
     return prefs[UserPrefsKeys.GROUP_ID]

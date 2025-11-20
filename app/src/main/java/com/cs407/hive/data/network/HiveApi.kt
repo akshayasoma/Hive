@@ -24,4 +24,7 @@ interface HiveApi {
     @POST("/api/group/addChore")
     suspend fun addChore(@Body body: AddChoreRequest)
 
+    @POST("/api/group/delete")
+    suspend fun deleteGroup(@Body body: Map<String, String>)
+
 }

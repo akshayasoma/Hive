@@ -1,5 +1,6 @@
 package com.cs407.hive.ui.screens
 
+import android.R.attr.description
 import android.content.Intent
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.ui.theme.HiveTheme
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
@@ -61,13 +63,21 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import com.cs407.hive.MainActivity
+import com.cs407.hive.data.local.clearGroupId
+import com.cs407.hive.data.local.saveGroupId
 import com.cs407.hive.data.model.GroupDetail
 import com.cs407.hive.data.model.UserDetail
 import com.cs407.hive.data.network.ApiClient
+import kotlinx.coroutines.launch
+import kotlin.collections.plus
 
 @Composable
 fun SettingsScreen(
@@ -80,9 +90,16 @@ fun SettingsScreen(
 
     Log.d("SettingsScreen", "Composable started with deviceId=$deviceId groupId=$groupId")
 
+    var showDialog by remember { mutableStateOf(false) }
+    var deletionIntent by remember { mutableStateOf("") }
+
+
     var editable by remember { mutableStateOf(false) }
     var darkMode by remember { mutableStateOf(darkModeState) }
 
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     // 1) These hold the live database data
     var user by remember { mutableStateOf<UserDetail?>(null) }
@@ -356,6 +373,63 @@ fun SettingsScreen(
             }
         }
 
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Delete Hive?") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = deletionIntent,
+                            onValueChange = { deletionIntent = it },
+                            label = { Text("Type: I want this gone!") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (deletionIntent == "I want this gone!") {
+                            scope.launch {
+                                try {
+                                    ApiClient.instance.deleteGroup(
+                                        mapOf(
+                                            "groupId" to groupId,
+                                            "deviceId" to deviceId
+                                        )
+                                    )
+
+                                    // Clear stored group ID (auto-logout from hive)
+                                    clearGroupId(context)
+
+                                    // Navigate back to login
+                                    val intent = Intent(context, MainActivity::class.java)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    context.startActivity(intent)
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    }) {
+                        Text("Add")
+                    }
+                },
+
+                dismissButton = {
+                    TextButton(onClick = {
+                        deletionIntent = ""
+                        showDialog = false
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
         // Bottom Bar with Home button
         BottomAppBar(
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -371,7 +445,7 @@ fun SettingsScreen(
             ) {
                 // Delete Button (Left)
                 Button(
-                    onClick = { /* TODO: delete account but alert to all grp mates and a confirmation dialog */ },
+                    onClick = { showDialog = true },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(

@@ -71,6 +71,36 @@ app.post("/api/checkLogin", async (req, res) => {
   }
 });
 
+
+app.post("/api/group/delete", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+    // Ensure accurate input
+    if (!groupId || !deviceId) {
+      return res.status(400).json({ error: "groupId and deviceId are required" });
+    }
+    // Find and validate group
+    const group = await Group.findOne({ groupId });
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    // Creator only deletion
+    if (group.creatorId !== deviceId) {
+      return res.status(403).json({ error: "Only the creator can delete this hive" });
+    }
+
+    // Delete
+    await Group.deleteOne({ groupId });
+
+    res.json({ message: "Hive deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // route
 app.post("/api/groups", async (req, res) => {
   try {
