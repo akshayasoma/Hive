@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.cs407.hive.ui.theme.HiveTheme
 
 @Composable
@@ -78,21 +84,20 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
             Box(
                 modifier = Modifier
                     .graphicsLayer {
-                        shadowElevation = 8.dp.toPx()
+                        shadowElevation = 20.dp.toPx()
                         shape = CircleShape
                         clip = true
                     }
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onPrimary),
+                    .background(color = if (isSystemInDarkTheme())
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f) // dark mode, more transparent
+                    else
+                        MaterialTheme.colorScheme.onPrimary ), //light mode same as text field color
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "LOGO",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 35.sp
-                )
+                BeeAnimation()
             }
 
             Surface(
@@ -297,6 +302,24 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun BeeAnimation() {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.bee_flying)
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
+
+    LottieAnimation(
+        composition = composition,
+        progress = { progress },
+        modifier = Modifier.size(180.dp)
+    )
 }
 
 @Preview(
