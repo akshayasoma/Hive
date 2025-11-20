@@ -84,7 +84,7 @@ dependencies {
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:1.5.1")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
-    implementation(libs.androidx.camera.view)
+    implementation("androidx.camera:camera-view:1.3.0")
     implementation("androidx.camera:camera-extensions:$cameraxVersion")
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.7")

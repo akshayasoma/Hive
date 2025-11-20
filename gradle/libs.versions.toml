@@ -22,8 +22,6 @@ foundation = "1.9.4"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityCompose" }
-androidx-camera-camera2 = { module = "androidx.camera.camera2:camera-camera2", version.ref = "cameraCamera2" }
-androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraView" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-camera = { module = "androidx.camera.lifecycle:lifecycle-camera", version.ref = "lifecycleCamera" }
