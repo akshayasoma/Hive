@@ -229,8 +229,8 @@ fun SettingsScreen(
                 ) {
                     //user name text field
                     OutlinedTextField(
-                        value = TextFieldValue(currentUserName),
-                        onValueChange = { currentUserName = it.text },
+                        value = currentUserName,
+                        onValueChange = { currentUserName = it },
                         label = { Text("Username", color = MaterialTheme.colorScheme.onSecondary) },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                         colors = TextFieldDefaults.colors(
@@ -246,8 +246,8 @@ fun SettingsScreen(
 
                     //grp name field
                     OutlinedTextField(
-                        value = TextFieldValue(currentGroupName),
-                        onValueChange = { currentGroupName = it.text },
+                        value = currentGroupName,
+                        onValueChange = { currentGroupName = it},
                         label = {
                             Text(
                                 "Group Name",
@@ -270,9 +270,7 @@ fun SettingsScreen(
                     // grp id field
                     OutlinedTextField(
                         value = TextFieldValue(currentGroupId),
-                        onValueChange = {
-
-                        }, //Need to connect to db to change to a new grp if possible
+                        onValueChange = {}, //Read Only
                         label = { Text("Group ID", color = MaterialTheme.colorScheme.onSecondary) },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                         colors = TextFieldDefaults.colors(
