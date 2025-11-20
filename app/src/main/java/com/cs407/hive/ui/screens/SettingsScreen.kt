@@ -29,7 +29,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -66,6 +65,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -374,15 +374,20 @@ fun SettingsScreen(
         }
 
         if (showDialog) {
+            val textColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Delete Hive?") },
+                title = { Text("Delete Hive?", color = MaterialTheme.colorScheme.onSecondary) },
                 text = {
                     Column {
                         OutlinedTextField(
                             value = deletionIntent,
                             onValueChange = { deletionIntent = it },
-                            label = { Text("Type: I want this gone!") },
+                            label = { Text("Type: I want this gone!", color = textColor) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -390,6 +395,17 @@ fun SettingsScreen(
                     }
                 },
                 confirmButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiary
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         if (deletionIntent == "I want this gone!") {
                             scope.launch {
@@ -414,19 +430,43 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                    }) {
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Add")
                     }
                 },
 
                 dismissButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         deletionIntent = ""
                         showDialog = false
-                    }) {
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
                         Text("Cancel")
                     }
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
 

@@ -4,11 +4,14 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -131,14 +134,26 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(chores.reversed()) { (name, pts, desc) ->
-                    Log.d("ChoresScreen", "Chore: $name, Points: $pts, Description: $desc")
-                    ChoreCard(
-                        username = "Unassigned",
-                        chore = name,
-                        points = "$pts pts",
-                        status = "To do"
-                    )
+                if (chores.isNotEmpty()) {
+                    items(chores.reversed()) { (name, pts, desc) ->
+                        Log.d("ChoresScreen", "Chore: $name, Points: $pts, Description: $desc")
+                        ChoreCard(
+                            username = "Unassigned",
+                            chore = name,
+                            points = "$pts pts",
+                            status = "To do",
+                            description = desc
+                        )
+                    }
+                } else {
+                    item {
+                        Text(
+                            text = "No chores yet! Add chores using the button below!",
+                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(32.dp)
+                        )
+                    }
                 }
             }
 
@@ -213,15 +228,26 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
             }
         }
         if (showDialog) {
+            val textColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Add a New Chore") },
+                title = {
+                    Text(
+                        "Add a New Chore",
+                        color = MaterialTheme.colorScheme.onSecondary
+                    )
+                },
+
                 text = {
                     Column {
                         OutlinedTextField(
                             value = choreName,
                             onValueChange = { choreName = it },
-                            label = { Text("Chore Name") },
+                            label = { Text("Chore Name", color = textColor) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -229,7 +255,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = points,
                             onValueChange = { points = it },
-                            label = { Text("Points") },
+                            label = { Text("Points", color = textColor) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -237,7 +263,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = description,
                             onValueChange = { description = it },
-                            label = { Text("Description") },
+                            label = { Text("Description", color = textColor) },
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -246,6 +272,17 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                     }
                 },
                 confirmButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiary
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
                     TextButton(onClick = {
                         if (choreName.isNotBlank() && points.isNotBlank()) {
                             val formattedName = choreName.split(" ")
@@ -285,20 +322,43 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
 
 
                         showDialog = false
-                    }) {
+                    }, colors = ButtonDefaults.textButtonColors(
+                        containerColor = buttonColor,
+                        contentColor = textColor
+                    )
+                    ) {
                         Text("Add")
                     }
                 },
-
                 dismissButton = {
-                    TextButton(onClick = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
+                    TextButton(
+                        onClick = {
                         choreName = ""
                         points = ""
                         showDialog = false
-                    }) {
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                        containerColor = buttonColor,
+                        contentColor = textColor
+                        )
+                    ) {
                         Text("Cancel")
                     }
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
         //info box
@@ -423,71 +483,110 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
 }
 
 @Composable
-fun ChoreCard(username: String, chore: String, points: String, status: String) {
-    Box(
-        modifier = Modifier
+fun ChoreCard(
+    username: String,
+    chore: String,
+    points: String,
+    status: String,
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = modifier
             .fillMaxWidth(0.9f)
-            .height(90.dp)
-            .background(
-                color = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .padding(12.dp)
+            .clickable { isExpanded = !isExpanded },
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(12.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Circle “bee” placeholder
-                Box(
-                    modifier = Modifier
-                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "🐝",
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 26.sp
-                    )
+            // Always visible section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Profile icon
+                    Box(
+                        modifier = Modifier
+                            .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
+                            .size(60.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🐝",
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 26.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column {
+                        Text(
+                            text = chore.uppercase(),
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = username,
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Column {
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = chore.uppercase(),
+                        text = points,
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = username,
+                        text = status,
                         color = MaterialTheme.colorScheme.onSecondary,
                         fontSize = 14.sp
                     )
                 }
             }
 
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = points,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = status,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 14.sp
-                )
+
+            AnimatedVisibility(
+                visible = isExpanded && description.isNotBlank(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Text(
+                        text = "Description:",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = description,
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
-
     }
 }
 
