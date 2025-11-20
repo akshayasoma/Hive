@@ -1,5 +1,6 @@
 package com.cs407.hive.data.network
 
+import com.cs407.hive.data.model.AddChoreRequest
 import com.cs407.hive.data.model.CheckLoginResponse
 import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.data.model.GroupResponse
@@ -19,5 +20,8 @@ interface HiveApi {
 
     @POST("/api/group/get")
     suspend fun getGroup(@Body body: Map<String, String>): GroupResponse
+
+    @POST("/api/group/addChore")
+    suspend fun addChore(@Body body: AddChoreRequest)
 
 }

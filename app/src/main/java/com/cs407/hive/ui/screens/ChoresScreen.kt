@@ -2,6 +2,7 @@ package com.cs407.hive.ui.screens
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,16 +41,39 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cs407.hive.data.model.AddChoreRequest
+import com.cs407.hive.data.network.ApiClient
+import com.cs407.hive.data.network.HiveApi
 import com.cs407.hive.ui.theme.HiveTheme
+import kotlinx.coroutines.launch
 
 @Composable
-fun ChoresScreen(onNavigateToHome: () -> Unit) {
+fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     var choreName by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) }
     var showInfo by remember { mutableStateOf(false) }
+
+
+    val api = remember { ApiClient.instance }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = api.getGroup(mapOf("groupId" to groupId))
+                val serverChores = response.group.chores ?: emptyList()
+
+                chores = serverChores.map { chore ->
+                    Triple(chore.name, chore.points.toString(), chore.description)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -108,6 +132,7 @@ fun ChoresScreen(onNavigateToHome: () -> Unit) {
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
                 items(chores.reversed()) { (name, pts, desc) ->
+                    Log.d("ChoresScreen", "Chore: $name, Points: $pts, Description: $desc")
                     ChoreCard(
                         username = "Unassigned",
                         chore = name,
@@ -225,10 +250,40 @@ fun ChoresScreen(onNavigateToHome: () -> Unit) {
                         if (choreName.isNotBlank() && points.isNotBlank()) {
                             val formattedName = choreName.split(" ")
                                 .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                            chores = chores + Triple(formattedName, points, description)
+                            Log.d("ChoresScreen", "Chore added: $formattedName, $points, $description")
+                            val request = AddChoreRequest(
+                                groupId = groupId,
+                                deviceId = deviceId,
+                                name = formattedName,
+                                description = description,
+                                points = points.toInt()
+
+                            )
+
+                            scope.launch {
+                                try{
+                                    api.addChore(request)
+                                    Log.d("ChoresScreen", "Chore added: $formattedName, $points, $description")
+
+//                                    chores = chores + Triple(formattedName, points, description)
+                                    val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
+                                    val updatedChores = updatedResponse.group.chores ?: emptyList()
+                                    chores = updatedChores.map { Triple(it.name, it.points.toString(), it.description) }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+
+                                }
+                                finally{
+                                    choreName = ""
+                                    points = ""
+                                    description = ""
+                                }
+                            }
+
                         }
-                        choreName = ""
-                        points = ""
+
+
+
                         showDialog = false
                     }) {
                         Text("Add")
@@ -440,7 +495,7 @@ fun ChoreCard(username: String, chore: String, points: String, status: String) {
 @Composable
 fun ChoresPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        ChoresScreen( onNavigateToHome = {})
+        ChoresScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
     }
 }
 
@@ -448,6 +503,6 @@ fun ChoresPreviewLight() {
 @Composable
 fun ChoresPreviewDark() {
     HiveTheme(dynamicColor = false) {
-        ChoresScreen(onNavigateToHome = {})
+        ChoresScreen(deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
     }
 }

@@ -20,11 +20,27 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // schema
 const groupSchema = new mongoose.Schema({
-  groupName: String,
-  creatorName: String,
-  groupId: String,
-  creatorId: String,
-  peopleList: [String]
+    groupName: String,
+    creatorName: String,
+    groupId: String,
+    creatorId: String,
+    peopleList: [String],
+
+    groceries: [
+      {
+        name: { type: String, required: true },
+        description: { type: String, default: "" },
+        quantity: { type: Number, default: 1 },
+      }
+    ],
+
+    chores: [
+      {
+        name: { type: String, required: true },
+        description: { type: String, default: "" },
+        points: { type: Number, default: 0 }
+      }
+    ]
 });
 
 const Group = mongoose.model("Group", groupSchema);
@@ -83,7 +99,7 @@ app.post("/api/groups", async (req, res) => {
       return res.status(200).json({ message: "User already in a group", existingGroup });
     }
 
-    const group = new Group({ groupName, creatorName, groupId, creatorId, peopleList : [creatorId] });
+    const group = new Group({ groupName, creatorName, groupId, creatorId, peopleList : [creatorId], groceries: [], chores: [] });
     await group.save();
     res.status(201).json({ message: "Group created", group });
   } catch (err) {
@@ -114,6 +130,65 @@ app.post("/api/group/get", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.post("/api/group/addGrocery", async (req, res) => {
+  try {
+    const { groupId, deviceId, name, description = "", quantity = 1 } = req.body;
+
+    if (!groupId || !deviceId || !name) {
+      return res.status(400).json({ error: "groupId, deviceId, and name are required" });
+    }
+
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // AUTH CHECK
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    group.groceries.push({
+      name,
+      description,
+      quantity
+    });
+
+    await group.save();
+    res.status(200).json({ message: "Grocery added", groceries: group.groceries });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/addChore", async (req, res) => {
+  try {
+    const { groupId, deviceId, name, description = "", points = 0 } = req.body;
+
+    if (!groupId || !deviceId || !name) {
+      return res.status(400).json({ error: "groupId, deviceId, and name are required" });
+    }
+
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // AUTH CHECK
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    group.chores.push({
+      name,
+      description,
+      points
+    });
+
+    await group.save();
+    res.status(200).json({ message: "Chore added", chores: group.chores });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 

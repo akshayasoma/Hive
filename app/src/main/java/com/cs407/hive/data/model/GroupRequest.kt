@@ -27,9 +27,24 @@ data class GroupResponse(
     val group: GroupDetail
 )
 
+data class ChoreItem(
+    val name: String,
+    val description: String,
+    val points: Int
+)
+
 data class GroupDetail(
     val groupName: String,
     val creatorId: String,
     val groupId: String,
-    val peopleList: List<String>
+    val peopleList: List<String>,
+    val chores: List<ChoreItem>? = emptyList()
+)
+
+data class AddChoreRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val points: Int
 )

@@ -138,6 +138,8 @@ fun AppNavigation(
         }
         composable("chore"){
             ChoresScreen(
+                deviceId = deviceId,
+                groupId = groupId!!,
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
