@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+    implementation(libs.gson)
 
     // CameraX
     val cameraxVersion = "1.3.0"
