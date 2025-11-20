@@ -46,6 +46,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.cs407.hive.ui.theme.HiveTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cs407.hive.data.perplexity.PerplexityRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class RecipeNote(
     val id: String,
@@ -58,7 +66,11 @@ data class RecipeNote(
 )
 
 @Composable
-fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = {}) {
+fun RecipeScreen(
+    onNavigateToHome: () -> Unit,
+    onNavigateToCamera: () -> Unit = {},
+    viewModel: RecipeViewModel = viewModel()
+) {
     var showAddIngredientDialog by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
     var showRecipeDetail by remember { mutableStateOf(false) }
@@ -66,6 +78,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
     var selectedRecipe by remember { mutableStateOf<RecipeNote?>(null) }
     var ingredientName by remember { mutableStateOf("") }
     var myIngredients by remember { mutableStateOf(listOf<String>()) }
+    val uiState by viewModel.uiState.collectAsState()
     var showRecipes by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("None") }
 
@@ -102,7 +115,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
         )
     }
 
-    val sortedRecipes = remember(sortOption, hardcodedRecipes) {
+    val sortedRecipes = remember(sortOption, hardcodedRecipes, myIngredients) {
         when (sortOption) {
             "Difficulty" -> hardcodedRecipes.sortedBy { recipe ->
                 when (recipe.difficulty) {
@@ -259,15 +272,59 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
                 contentPadding = PaddingValues(bottom = 150.dp)
             ) {
                 if (showRecipes) {
-                    items(sortedRecipes) { recipe ->
-                        RecipeCard(
-                            recipe = recipe,
-                            onDelete = { /* TODO */ },
-                            onClick = {
-                                selectedRecipe = recipe
-                                showRecipeDetail = true
+                    when {
+                        uiState.isLoading -> {
+                            item {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.padding(32.dp)
+                                )
                             }
-                        )
+                        }
+
+                        uiState.errorMessage != null -> {
+                            item {
+                                Text(
+                                    text = uiState.errorMessage ?: "",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(32.dp)
+                                )
+                            }
+                        }
+
+                        uiState.recipes.isNotEmpty() -> {
+                            items(uiState.recipes) { recipe ->
+                                RecipeCard(
+                                    recipe = recipe,
+                                    onDelete = {},
+                                    onClick = {
+                                        selectedRecipe = recipe
+                                        showRecipeDetail = true
+                                    }
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = uiState.lastRawResponse ?: "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
+                        }
+
+                        else -> {
+                            items(sortedRecipes) { recipe ->
+                                RecipeCard(
+                                    recipe = recipe,
+                                    onDelete = { /* TODO */ },
+                                    onClick = {
+                                        selectedRecipe = recipe
+                                        showRecipeDetail = true
+                                    }
+                                )
+                            }
+                        }
                     }
                 } else {
                     item {
@@ -295,6 +352,7 @@ fun RecipeScreen(onNavigateToHome: () -> Unit, onNavigateToCamera: () -> Unit = 
             Button(
                 onClick = {
                     showRecipes = true
+                    viewModel.fetchRecipes(myIngredients)
                 },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
@@ -624,7 +682,11 @@ fun IngredientChip(ingredient: String, onDelete: () -> Unit) {
         color = MaterialTheme.colorScheme.onPrimary,
         modifier = Modifier
             .wrapContentWidth()
-            .border(1.dp, MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.3f),
+                RoundedCornerShape(16.dp)
+            )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -792,3 +854,33 @@ fun RecipePreviewDark() {
         RecipeScreen(onNavigateToHome = {})
     }
 }
+
+class RecipeViewModel(
+    private val repository: PerplexityRepository = PerplexityRepository()
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(RecipeUiState())
+    val uiState: StateFlow<RecipeUiState> = _uiState.asStateFlow()
+
+    fun fetchRecipes(ingredients: List<String>) {
+        if (ingredients.isEmpty()) return
+        _uiState.value = RecipeUiState(isLoading = true)
+        viewModelScope.launch {
+            try {
+                val prompt = buildRecipePrompt(ingredients)
+                val response = repository.askPrompt(prompt)
+                val recipes = RecipeNoteParser.parse(response)
+                _uiState.value = RecipeUiState(recipes = recipes, lastRawResponse = response)
+            } catch (t: Throwable) {
+                _uiState.value =
+                    RecipeUiState(errorMessage = t.message ?: "Failed to fetch recipes")
+            }
+        }
+    }
+}
+
+data class RecipeUiState(
+    val isLoading: Boolean = false,
+    val recipes: List<RecipeNote> = emptyList(),
+    val errorMessage: String? = null,
+    val lastRawResponse: String? = null
+)
