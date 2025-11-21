@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,6 +57,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.animation.animateContentSize
 
 data class RecipeNote(
     val id: String,
@@ -74,14 +77,13 @@ fun RecipeScreen(
 ) {
     var showAddIngredientDialog by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
-    var showRecipeDetail by remember { mutableStateOf(false) }
     var showSortOptions by remember { mutableStateOf(false) }
-    var selectedRecipe by remember { mutableStateOf<RecipeNote?>(null) }
     var ingredientName by remember { mutableStateOf("") }
-    var myIngredients by remember { mutableStateOf(listOf<String>()) }
+    val myIngredients by viewModel.myIngredients.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     var showRecipes by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("None") }
+    var expandedRecipeId by remember { mutableStateOf<String?>(null) }
 
     // Hardcoded recipe notes
     val hardcodedRecipes = remember {
@@ -234,7 +236,7 @@ fun RecipeScreen(
                         IngredientChip(
                             ingredient = ingredient,
                             onDelete = {
-                                myIngredients = myIngredients - ingredient
+                                viewModel.removeIngredient(ingredient)
                             }
                         )
                     }
@@ -296,20 +298,11 @@ fun RecipeScreen(
                             items(uiState.recipes) { recipe ->
                                 RecipeCard(
                                     recipe = recipe,
-                                    onDelete = {},
-                                    onClick = {
-                                        selectedRecipe = recipe
-                                        showRecipeDetail = true
+                                    isExpanded = expandedRecipeId == recipe.id,
+                                    onToggle = {
+                                        expandedRecipeId =
+                                            if (expandedRecipeId == recipe.id) null else recipe.id
                                     }
-                                )
-                            }
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = uiState.lastRawResponse ?: "",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                                    modifier = Modifier.padding(horizontal = 16.dp)
                                 )
                             }
                         }
@@ -318,10 +311,10 @@ fun RecipeScreen(
                             items(sortedRecipes) { recipe ->
                                 RecipeCard(
                                     recipe = recipe,
-                                    onDelete = { /* TODO */ },
-                                    onClick = {
-                                        selectedRecipe = recipe
-                                        showRecipeDetail = true
+                                    isExpanded = expandedRecipeId == recipe.id,
+                                    onToggle = {
+                                        expandedRecipeId =
+                                            if (expandedRecipeId == recipe.id) null else recipe.id
                                     }
                                 )
                             }
@@ -477,7 +470,8 @@ fun RecipeScreen(
                     }
                     TextButton(onClick = {
                         if (ingredientName.isNotBlank()) {
-                            myIngredients = myIngredients + ingredientName.trim().replaceFirstChar { it.uppercase() }
+                            viewModel.addIngredient(
+                                ingredientName.trim().replaceFirstChar { it.uppercase() })
                         }
                         ingredientName = ""
                         showAddIngredientDialog = false
@@ -517,17 +511,6 @@ fun RecipeScreen(
                 containerColor = MaterialTheme.colorScheme.onPrimary,
                 titleContentColor = MaterialTheme.colorScheme.onSecondary,
                 textContentColor = MaterialTheme.colorScheme.onSecondary
-            )
-        }
-
-
-        if (showRecipeDetail && selectedRecipe != null) {
-            RecipeDetailDialog(
-                recipe = selectedRecipe!!,
-                onDismiss = {
-                    showRecipeDetail = false
-                    selectedRecipe = null
-                }
             )
         }
 
@@ -755,27 +738,22 @@ fun IngredientChip(ingredient: String, onDelete: () -> Unit) {
 }
 
 @Composable
-fun RecipeCard(recipe: RecipeNote, onDelete: () -> Unit, onClick: () -> Unit) {
-    Box(
+fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
+    Column(
         modifier = Modifier
             .fillMaxWidth(0.9f)
-            .height(120.dp)
-            .background(
-                color = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .clickable { onClick() }
-            .padding(12.dp),
+            .clip(RoundedCornerShape(10.dp))
+            .background(color = MaterialTheme.colorScheme.onPrimary)
+            .clickable { onToggle() }
+            .padding(16.dp)
+            .animateContentSize()
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = recipe.dishName.uppercase(),
                     color = MaterialTheme.colorScheme.onSecondary,
@@ -790,82 +768,40 @@ fun RecipeCard(recipe: RecipeNote, onDelete: () -> Unit, onClick: () -> Unit) {
                     fontWeight = FontWeight.Medium
                 )
             }
+            Icon(
+                imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                tint = MaterialTheme.colorScheme.onSecondary
+            )
         }
-    }
-}
 
-@Composable
-fun RecipeDetailDialog(recipe: RecipeNote, onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = recipe.dishName,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondary
-                    )
-                    Text(
-                        text = "${recipe.difficulty} • ${recipe.cookingTime}",
-                        color = getDifficultyColor(recipe.difficulty),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+        AnimatedVisibility(visible = isExpanded) {
+            Column(modifier = Modifier.padding(top = 12.dp)) {
                 Text(
                     text = "Ingredients",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondary
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = recipe.ingredients,
                     color = MaterialTheme.colorScheme.onSecondary,
                     fontSize = 14.sp
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "Instructions",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondary
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = recipe.instructions,
                     color = MaterialTheme.colorScheme.onSecondary,
                     fontSize = 14.sp
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text("Close")
-                }
             }
         }
     }
@@ -902,6 +838,9 @@ class RecipeViewModel(
     private val _uiState = MutableStateFlow(RecipeUiState())
     val uiState: StateFlow<RecipeUiState> = _uiState.asStateFlow()
 
+    private val _myIngredients = MutableStateFlow<List<String>>(emptyList())
+    val myIngredients: StateFlow<List<String>> = _myIngredients.asStateFlow()
+
     fun fetchRecipes(ingredients: List<String>) {
         if (ingredients.isEmpty()) return
         _uiState.value = RecipeUiState(isLoading = true)
@@ -916,6 +855,27 @@ class RecipeViewModel(
                     RecipeUiState(errorMessage = t.message ?: "Failed to fetch recipes")
             }
         }
+    }
+
+    fun addIngredient(ingredient: String) {
+        if (ingredient.isNotBlank() && !_myIngredients.value.contains(ingredient)) {
+            _myIngredients.value = _myIngredients.value + ingredient
+        }
+    }
+
+    fun addIngredients(ingredients: List<String>) {
+        if (ingredients.isEmpty()) return
+        val current = _myIngredients.value.toMutableList()
+        ingredients.forEach { ingredient ->
+            if (ingredient.isNotBlank() && !current.contains(ingredient)) {
+                current += ingredient
+            }
+        }
+        _myIngredients.value = current
+    }
+
+    fun removeIngredient(ingredient: String) {
+        _myIngredients.value = _myIngredients.value - ingredient
     }
 }
 

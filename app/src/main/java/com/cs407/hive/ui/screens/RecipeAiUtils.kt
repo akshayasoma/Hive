@@ -45,16 +45,39 @@ object RecipeNoteParser {
 
     private fun toRecipeNote(block: String): RecipeNote? {
         val fields = mutableMapOf<String, String>()
+        var currentKey: String? = null
         block.lines().forEach { line ->
             val trimmed = line.trim()
-            if (trimmed.isEmpty() || trimmed.equals("RecipeNote", ignoreCase = true)) return@forEach
-            val delimiterIndex = trimmed.indexOf('=')
-                .takeIf { it >= 0 }
-                ?: trimmed.indexOf(':').takeIf { it >= 0 }
-                ?: return@forEach
-            val key = trimmed.substring(0, delimiterIndex).trim().lowercase()
-            val value = trimmed.substring(delimiterIndex + 1).trim()
-            fields[key] = value
+            if (trimmed.equals("RecipeNote", ignoreCase = true)) return@forEach
+            if (trimmed.isEmpty()) {
+                if (currentKey != null && fields[currentKey]?.isNotEmpty() == true) {
+                    fields[currentKey!!] = fields[currentKey!!] + "\n"
+                }
+                return@forEach
+            }
+
+            val delimiterIndex = sequenceOf('=', ':')
+                .map { trimmed.indexOf(it) }
+                .firstOrNull { it >= 0 }
+
+            val isNewField = delimiterIndex != null && delimiterIndex > 0 &&
+                    trimmed.substring(0, delimiterIndex).none { it.isWhitespace() }
+
+            if (isNewField && delimiterIndex != null) {
+                val key = trimmed.substring(0, delimiterIndex).trim().lowercase()
+                val value = trimmed.substring(delimiterIndex + 1).trim()
+                if (key.isNotEmpty()) {
+                    fields[key] = value
+                    currentKey = key
+                } else {
+                    currentKey = null
+                }
+            } else if (currentKey != null) {
+                val previous = fields[currentKey].orEmpty()
+                val continuation = line.trimEnd()
+                fields[currentKey!!] =
+                    if (previous.isEmpty()) continuation else "$previous\n$continuation"
+            }
         }
 
         val dishName = fields["dishname"]?.takeIf { it.isNotBlank() } ?: return null
@@ -63,10 +86,48 @@ object RecipeNoteParser {
             dishName = dishName,
             difficulty = fields["difficulty"].orEmpty().ifBlank { "Medium" },
             cookingTime = fields["cookingtime"].orEmpty().ifBlank { "30 mins" },
-            ingredients = fields["ingredients"].orEmpty().ifBlank { "No ingredients listed" },
-            instructions = fields["instructions"].orEmpty().ifBlank { "No instructions provided" },
+            ingredients = sanitizeMultilineField(fields["ingredients"].orEmpty())
+                .ifBlank { "No ingredients listed" },
+            instructions = sanitizeMultilineField(fields["instructions"].orEmpty())
+                .ifBlank { "No instructions provided" },
             timestamp = fields["timestamp"].orEmpty().ifBlank { currentDateIso() }
         )
+    }
+
+    private fun sanitizeMultilineField(value: String): String {
+        if (value.isEmpty()) return value
+        val builder = StringBuilder(value.length)
+        var index = 0
+        while (index < value.length) {
+            val current = value[index]
+            if (current == '\\' && index + 1 < value.length) {
+                when (val next = value[index + 1]) {
+                    'n' -> {
+                        builder.append('\n')
+                        index += 2
+                        continue
+                    }
+
+                    'r' -> {
+                        builder.append('\n')
+                        index += 2
+                        continue
+                    }
+
+                    't' -> {
+                        builder.append('\t')
+                        index += 2
+                        continue
+                    }
+
+                    else -> builder.append(current)
+                }
+            } else {
+                builder.append(current)
+            }
+            index++
+        }
+        return builder.toString()
     }
 
     private fun currentDateIso(): String {
@@ -74,4 +135,3 @@ object RecipeNoteParser {
         return formatter.format(Date())
     }
 }
-
