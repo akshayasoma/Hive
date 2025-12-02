@@ -69,7 +69,7 @@ Observer: Akshaya<br>
 Coordinator: Glenn<br>
 
 #### Accomplishments:
-Kavya:<br>
+Kavya: Implemented the shake animation for delete mode, swiping left animation to delete and color gradient effect on swipe left for chores and grocery screen.<br>
 Glenn:<br>
 Pranav: AI for recipe generation has been successfully implemented. It is now entirely operational. :D<br>
 Akshaya:<br>
