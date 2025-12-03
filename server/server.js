@@ -100,6 +100,48 @@ app.post("/api/group/delete", async (req, res) => {
   }
 });
 
+app.post("/api/group/leave", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+    // Make sure the parameters are correct
+    if (!groupId || !deviceId) {
+      return res.status(400).json({ error: "groupId and deviceId required" });
+    }
+
+    // Check to see if the group to be deleted even exists
+    const group = await Group.findOne({ groupId: groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Check if the user is even in the hive.
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "User is not part of this hive" });
+    }
+
+    // Delete the hive if the creator leaves
+    if (group.creatorId === deviceId) {
+      await Group.deleteOne({ groupId });
+      return res.json({
+        message: "Creator left — hive deleted for everyone",
+        hiveDeleted: true
+      });
+    }
+
+    // If a normal member leaves, just remove them from the list and save
+    group.peopleList = group.peopleList.filter(id => id !== deviceId);
+    await group.save();
+
+    // Success!
+    res.json({
+      message: "User removed from hive",
+      hiveDeleted: false,
+      group
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // route
 app.post("/api/groups", async (req, res) => {
@@ -134,6 +176,54 @@ app.post("/api/groups", async (req, res) => {
     res.status(201).json({ message: "Group created", group });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/join", async (req, res) => {
+  try {
+    const { groupId, deviceId, userName } = req.body;
+    console.log("Joining group with groupId: ", groupId, " deviceId: ", deviceId, " userName: ", userName)
+
+    // Make sure all the required parameters are passed in
+    if (!groupId || !deviceId || !userName) {
+      return res.status(400).json({ error: "groupId, deviceId, and userName are required" });
+    }
+    console.log("Finding group")
+    // Find the group to join
+    const group = await Group.findOne({ groupId });
+    if (!group) {
+      console.log("Group not found")
+      return res.status(404).json({ error: "Group not found" });
+    }
+    console.log("RIP")
+    // Make sure the user isn't in a group already
+    const existingGroupForUser = await Group.findOne({ peopleList: deviceId });
+    if (existingGroupForUser && existingGroupForUser.groupId !== groupId) {
+      return res.status(400).json({ error: "User already in another group" });
+    }
+
+    // Checks if the user already has a profile. If no, create one
+    let user = await User.findOne({ userId: deviceId });
+    if (!user) {
+      user = new User({
+        userId: deviceId,
+        name: userName,
+      });
+      await user.save();
+    }
+
+    // Add user to this group's peopleList if not already present
+    if (!group.peopleList.includes(deviceId)) {
+      group.peopleList.push(deviceId);
+      await group.save();
+    }
+    // Join group successful!
+    return res.status(200).json({
+      message: "Joined group successfully",
+      group,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -267,6 +357,8 @@ app.post("/api/user/updateName", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
 
 
 // start server

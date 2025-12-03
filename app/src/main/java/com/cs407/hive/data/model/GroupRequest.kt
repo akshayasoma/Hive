@@ -64,3 +64,14 @@ data class UpdateGroupNameRequest(
     val deviceId: String,
     val newName: String
 )
+
+data class JoinGroupRequest(
+    val groupId: String,
+    val deviceId: String,
+    val userName: String
+)
+
+data class LeaveGroupRequest(
+    val groupId: String,
+    val deviceId: String
+)

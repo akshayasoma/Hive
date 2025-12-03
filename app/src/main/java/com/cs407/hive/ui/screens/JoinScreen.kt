@@ -3,6 +3,7 @@ package com.cs407.hive.ui.screens
 import com.cs407.hive.R
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -41,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,13 +59,19 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.cs407.hive.data.local.saveGroupId
+import com.cs407.hive.data.model.JoinGroupRequest
+import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.ui.theme.HiveTheme
+import kotlinx.coroutines.launch
 
 @Composable
-fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
+fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Unit) {
 
     var groupId by remember { mutableStateOf(TextFieldValue("")) }
     var userName by remember { mutableStateOf(TextFieldValue("")) }
+    val api = remember { ApiClient.instance }
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -252,7 +260,28 @@ fun JoinScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: () -> Unit) {
 
                     // Save Button
                     Button(
-                        onClick = { onNavigateToHome() },
+                        onClick = {
+
+                            scope.launch {
+                                try{
+                                    val joinRoom = JoinGroupRequest(
+                                        groupId = groupId.text,
+                                        userName = userName.text,
+                                        deviceId = deviceId
+                                    )
+
+                                    val response = api.joinGroup(joinRoom)
+                                    Log.d("JoinScreen", "Joined group successfully")
+                                    onNavigateToHome(joinRoom.groupId)
+                                }
+                                catch(e: Exception){
+                                    Log.e("JoinScreen", "Join error: ${e.message}")
+                                }
+
+                            }
+
+
+                                  },
                         shape = CircleShape,
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -331,7 +360,7 @@ fun BeeAnimation() {
 @Composable
 fun JoinScreenPreviewDark() {
     HiveTheme(dynamicColor = false) {
-        JoinScreen (onNavigateToLogIn = {}, onNavigateToHome = {})
+        JoinScreen (deviceId = "", onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
 
@@ -344,6 +373,6 @@ fun JoinScreenPreviewDark() {
 @Composable
 fun JoinScreenPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        JoinScreen(onNavigateToLogIn = {}, onNavigateToHome = {})
+        JoinScreen(deviceId = "", onNavigateToLogIn = {}, onNavigateToHome = {})
     }
 }
