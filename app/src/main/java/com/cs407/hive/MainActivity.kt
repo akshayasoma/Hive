@@ -1,10 +1,14 @@
 package com.cs407.hive
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -31,10 +36,22 @@ import com.cs407.hive.ui.screens.RecipeScreen
 import com.cs407.hive.ui.screens.RecipeViewModel
 import com.cs407.hive.ui.screens.SettingsScreen
 import com.cs407.hive.ui.theme.HiveTheme
+import com.cs407.hive.workers.WorkerManager
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val requestNotificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted, worker notifications will work
+        } else {
+            // Permission denied, notifications won't be shown
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -44,6 +61,17 @@ class MainActivity : ComponentActivity() {
             contentResolver,
             Settings.Secure.ANDROID_ID
         )
+
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
 
         setContent {
             //This is not persistent...need to make the user light/dark mode preferences persistent
@@ -95,6 +123,13 @@ fun AppNavigation(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val recipeViewModel: RecipeViewModel = viewModel()
+
+    // Start the periodic worker when user has a valid groupId
+    LaunchedEffect(groupId) {
+        if (!groupId.isNullOrEmpty()) {
+            WorkerManager.scheduleChoreCheckWorker(context, groupId!!, deviceId)
+        }
+    }
 
     // NavHost sets up the navigation graph for the app
     NavHost(
