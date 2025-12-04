@@ -71,7 +71,7 @@ Coordinator: Glenn<br>
 #### Accomplishments:
 Kavya: Implemented the shake animation for delete mode, swiping left animation to delete and color gradient effect on swipe left for chores and grocery screen. Changed the Font throughout all screens. Added flying bee animation to the login screen. Fixed the text wrapping of the chores and grocery cards. Updated the camera UI.<br>
 Glenn:Add + Remove chores and groceries in DB. Updated front end callback logic. Added Join  + Leave hive.<br>
-Pranav: AI for recipe generation has been successfully implemented. Also modified the camera to detect ingredients and send them over to the recipe generator. It is now entirely operational. :D<br>
+Pranav: AI for recipe generation has been successfully implemented. Also modified the camera to detect ingredients and send them over to the recipe generator. Also added periodic notifications so that the user is aware of changes to the hive in name, chores, or groceries. Added a method to manually invoke it too.<br>
 Akshaya: Toast messages/notifications show up when users add/delete chores or groceries and also when you change assign a user or if you change status of a chore. Created a button that allows users to assign a member to a chore and to change the status of said chore. Once completed, the chore will have a strike and fade out.<br>
 
 <br>
