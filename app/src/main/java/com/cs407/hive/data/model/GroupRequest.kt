@@ -30,7 +30,9 @@ data class GroupResponse(
 data class ChoreItem(
     val name: String,
     val description: String,
-    val points: Int
+    val points: Int,
+    val status: Int,
+    val assignee: String
 )
 
 data class GroupDetail(
@@ -46,7 +48,19 @@ data class AddChoreRequest(
     val deviceId: String,
     val name: String,
     val description: String,
-    val points: Int
+    val points: Int,
+    val assignee: String = "",
+    val status: Int = 0
+)
+
+data class DeleteChoreRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int,
+    val status: Int,
+    val assignee: String
 )
 
 data class DeleteGroupRequest(
@@ -63,4 +77,23 @@ data class UpdateGroupNameRequest(
     val groupId: String,
     val deviceId: String,
     val newName: String
+)
+
+data class JoinGroupRequest(
+    val groupId: String,
+    val deviceId: String,
+    val userName: String
+)
+
+data class LeaveGroupRequest(
+    val groupId: String,
+    val deviceId: String
+)
+
+data class UiChore(
+    val name: String,
+    val description: String,
+    val points: Int,
+    val status: Int,
+    val assignee: String
 )

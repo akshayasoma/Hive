@@ -66,6 +66,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,6 +75,7 @@ import com.cs407.hive.MainActivity
 import com.cs407.hive.data.local.clearGroupId
 import com.cs407.hive.data.local.saveGroupId
 import com.cs407.hive.data.model.GroupDetail
+import com.cs407.hive.data.model.LeaveGroupRequest
 import com.cs407.hive.data.model.UpdateGroupNameRequest
 import com.cs407.hive.data.model.UpdateUserNameRequest
 import com.cs407.hive.data.model.UserDetail
@@ -93,7 +95,9 @@ fun SettingsScreen(
     Log.d("SettingsScreen", "Composable started with deviceId=$deviceId groupId=$groupId")
 
     var showDialog by remember { mutableStateOf(false) }
+    var showDialogLeave by remember { mutableStateOf(false) }
     var deletionIntent by remember { mutableStateOf("") }
+    var leaveIntent by remember { mutableStateOf("") }
 
 
     var editable by remember { mutableStateOf(false) }
@@ -516,6 +520,105 @@ fun SettingsScreen(
             )
         }
 
+        if (showDialogLeave) {
+            val textColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
+            AlertDialog(
+                onDismissRequest = { showDialogLeave = false },
+                title = { Text("Leave Hive?", color = MaterialTheme.colorScheme.onSecondary) },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = leaveIntent,
+                            onValueChange = { leaveIntent = it },
+                            label = { Text("Type: LEAVE", color = textColor) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                    }
+                },
+                confirmButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiary
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
+                    TextButton(onClick = {
+                        if (leaveIntent == "LEAVE") {
+                            scope.launch {
+                                try {
+
+                                    val leaveGroup = LeaveGroupRequest(
+                                        groupId = groupId,
+                                        deviceId = deviceId
+                                    )
+
+                                    val res = ApiClient.instance.leaveGroup(leaveGroup)
+                                    Log.d("SettingsScreen", "Leave Group Response: $res")
+
+                                    // Clear stored group ID (auto-logout from hive)
+                                    clearGroupId(context)
+
+                                    // Navigate back to login
+                                    val intent = Intent(context, MainActivity::class.java)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    context.startActivity(intent)
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
+                        Text("Leave")
+                    }
+                },
+
+                dismissButton = {
+                    val buttonColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                    }
+
+                    val textColor = if (isSystemInDarkTheme()) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
+                    TextButton(onClick = {
+                        leaveIntent = ""
+                        showDialogLeave = false
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = textColor
+                        )
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.onPrimary,
+                titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
+            )
+        }
+
         // Bottom Bar with Home button
         BottomAppBar(
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -567,7 +670,9 @@ fun SettingsScreen(
 
                 // Logout Button (Right)
                 Button(
-                    onClick = { /* TODO: logout alert dialog then logout */ },
+                    onClick = { /* TODO: logout alert dialog then logout */
+                        showDialogLeave = true
+                    },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(

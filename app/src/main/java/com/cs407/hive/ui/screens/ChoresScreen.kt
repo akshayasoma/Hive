@@ -1,5 +1,6 @@
 package com.cs407.hive.ui.screens
 
+import android.R.attr.name
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
@@ -58,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.R
 import com.cs407.hive.data.model.AddChoreRequest
+import com.cs407.hive.data.model.DeleteChoreRequest
+import com.cs407.hive.data.model.UiChore
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.data.network.HiveApi
 import com.cs407.hive.ui.theme.HiveTheme
@@ -70,7 +73,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
     var choreName by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) }
+//    var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) } // OLD SYSTEM
+    var chores by remember { mutableStateOf(listOf<UiChore>()) }
     var showInfo by remember { mutableStateOf(false) }
     var deleteMode by remember { mutableStateOf(false) }
     val CooperBt = FontFamily(
@@ -87,8 +91,17 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 val response = api.getGroup(mapOf("groupId" to groupId))
                 val serverChores = response.group.chores ?: emptyList()
 
+//                chores = serverChores.map { chore ->
+//                    Triple(chore.name, chore.points.toString(), chore.description)
+//                }
                 chores = serverChores.map { chore ->
-                    Triple(chore.name, chore.points.toString(), chore.description)
+                    UiChore(
+                        name = chore.name,
+                        description = chore.description,
+                        points = chore.points,
+                        status = chore.status,
+                        assignee = chore.assignee
+                    )
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -154,17 +167,58 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
                 if (chores.isNotEmpty()) {
-                    items(chores.reversed()) { (name, pts, desc) ->
-                        Log.d("ChoresScreen", "Chore: $name, Points: $pts, Description: $desc")
+                    items(
+                        items=chores.reversed(),
+                        key={chore -> "${chore.name}/${chore.points}/${chore.description}/${chore.status}/${chore.assignee}"}
+                    ) { chore ->
+                        Log.d("ChoresScreen", "Chore: ${chore.name}, Points: ${chore.points}, Description: ${chore.description}")
                         ChoreCard(
-                            username = "Unassigned",
-                            chore = name,
-                            points = "$pts pts",
-                            status = "To do",
-                            description = desc,
+                            username = chore.assignee.ifBlank { "Unassigned" },
+                            chore = chore.name,
+                            points = "${chore.points} pts",
+                            status = when (chore.status) {
+                                0 -> "To do"
+                                1 -> "In progress"
+                                2 -> "Done"
+                                else -> "Unknown"
+                            },
+                            description = chore.description,
                             deleteMode = deleteMode,
                             onDelete = {
                                 //TODO: Delete the Chore in db
+                                scope.launch {
+                                    try{
+                                        val deleteChore = DeleteChoreRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            choreName = chore.name,
+                                            description = chore.description,
+                                            points = chore.points,
+                                            status = chore.status,
+                                            assignee = chore.assignee
+                                        )
+                                        api.deleteChore(deleteChore)
+
+                                        val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
+                                        val updatedChores = updatedResponse.group.chores ?: emptyList()
+
+                                        chores = updatedChores.map {
+                                            UiChore(
+                                                name = it.name,
+                                                description = it.description,
+                                                points = it.points,
+                                                status = it.status,
+                                                assignee = it.assignee
+                                            )
+                                        }
+
+                                        Log.d("ChoresScreen", "Chore successfully deleted: ${chore.name}")
+                                    }
+                                    catch(e: Exception){
+                                        Log.e("ChoresScreen", "Error deleting chore: $e")
+                                    }
+
+                                }
                             }
                         )
                     }
@@ -330,7 +384,13 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
 //                                    chores = chores + Triple(formattedName, points, description)
                                     val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
                                     val updatedChores = updatedResponse.group.chores ?: emptyList()
-                                    chores = updatedChores.map { Triple(it.name, it.points.toString(), it.description) }
+                                    chores = updatedChores.map { UiChore(
+                                        name = it.name,
+                                        description = it.description,
+                                        points = it.points,
+                                        status = it.status,
+                                        assignee = it.assignee
+                                    ) }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
 

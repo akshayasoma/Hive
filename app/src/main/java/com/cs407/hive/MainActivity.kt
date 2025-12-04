@@ -126,7 +126,14 @@ fun AppNavigation(
         }
         composable("join") {
             JoinScreen (
-                onNavigateToHome = { navController.navigate("home") },
+                deviceId=deviceId,
+                onNavigateToHome = { newGroupId ->
+                    groupId = newGroupId
+                    // Persist it for auto-login
+                    scope.launch {
+                        saveGroupId(context, newGroupId)
+                    }
+                    navController.navigate("home") },
                 onNavigateToLogIn = { navController.navigate("logIn") }
             )
         }

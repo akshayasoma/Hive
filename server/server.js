@@ -38,7 +38,9 @@ const groupSchema = new mongoose.Schema({
       {
         name: { type: String, required: true },
         description: { type: String, default: "" },
-        points: { type: Number, default: 0 }
+        points: { type: Number, default: 0 },
+        status: { type: Number, default: 0 },
+        assignee: { type: String, default: "" }
       }
     ]
 });
@@ -100,6 +102,48 @@ app.post("/api/group/delete", async (req, res) => {
   }
 });
 
+app.post("/api/group/leave", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+    // Make sure the parameters are correct
+    if (!groupId || !deviceId) {
+      return res.status(400).json({ error: "groupId and deviceId required" });
+    }
+
+    // Check to see if the group to be deleted even exists
+    const group = await Group.findOne({ groupId: groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Check if the user is even in the hive.
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "User is not part of this hive" });
+    }
+
+    // Delete the hive if the creator leaves
+    if (group.creatorId === deviceId) {
+      await Group.deleteOne({ groupId });
+      return res.json({
+        message: "Creator left — hive deleted for everyone",
+        hiveDeleted: true
+      });
+    }
+
+    // If a normal member leaves, just remove them from the list and save
+    group.peopleList = group.peopleList.filter(id => id !== deviceId);
+    await group.save();
+
+    // Success!
+    res.json({
+      message: "User removed from hive",
+      hiveDeleted: false,
+      group
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // route
 app.post("/api/groups", async (req, res) => {
@@ -134,6 +178,54 @@ app.post("/api/groups", async (req, res) => {
     res.status(201).json({ message: "Group created", group });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/join", async (req, res) => {
+  try {
+    const { groupId, deviceId, userName } = req.body;
+    console.log("Joining group with groupId: ", groupId, " deviceId: ", deviceId, " userName: ", userName)
+
+    // Make sure all the required parameters are passed in
+    if (!groupId || !deviceId || !userName) {
+      return res.status(400).json({ error: "groupId, deviceId, and userName are required" });
+    }
+    console.log("Finding group")
+    // Find the group to join
+    const group = await Group.findOne({ groupId });
+    if (!group) {
+      console.log("Group not found")
+      return res.status(404).json({ error: "Group not found" });
+    }
+    console.log("RIP")
+    // Make sure the user isn't in a group already
+    const existingGroupForUser = await Group.findOne({ peopleList: deviceId });
+    if (existingGroupForUser && existingGroupForUser.groupId !== groupId) {
+      return res.status(400).json({ error: "User already in another group" });
+    }
+
+    // Checks if the user already has a profile. If no, create one
+    let user = await User.findOne({ userId: deviceId });
+    if (!user) {
+      user = new User({
+        userId: deviceId,
+        name: userName,
+      });
+      await user.save();
+    }
+
+    // Add user to this group's peopleList if not already present
+    if (!group.peopleList.includes(deviceId)) {
+      group.peopleList.push(deviceId);
+      await group.save();
+    }
+    // Join group successful!
+    return res.status(200).json({
+      message: "Joined group successfully",
+      group,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -192,7 +284,7 @@ app.post("/api/group/addGrocery", async (req, res) => {
 
 app.post("/api/group/addChore", async (req, res) => {
     try {
-        const { groupId, deviceId, name, description = "", points = 0 } = req.body;
+        const { groupId, deviceId, name, description = "", points = 0, status = 0, assignee = "" } = req.body;
 
         if (!groupId || !deviceId || !name) {
           return res.status(400).json({ error: "groupId, deviceId, and name are required" });
@@ -209,7 +301,9 @@ app.post("/api/group/addChore", async (req, res) => {
         group.chores.push({
           name,
           description,
-          points
+          points,
+          status,
+          assignee
         });
 
         await group.save();
@@ -218,6 +312,54 @@ app.post("/api/group/addChore", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.post("/api/group/deleteChore", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description, points, status, assignee } = req.body;
+    // Makes sure we have valid input parameters
+    if (!groupId || !deviceId || !choreName || points === undefined) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+    // Status can only be 0, 1, or 2. If not, return error
+    if (status < 0 || status > 2 || !Number.isInteger(status)) {
+          return res.status(400).json({ error: "Status not allowed" });
+        }
+
+
+    // Make sure the group exists and that the requester actually belongs to the group
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Attempt to remove the chore
+    const before = group.chores.length;
+    group.chores = group.chores.filter(chore =>
+      !(
+        chore.name === choreName &&
+        chore.description === (description ?? "") &&
+        chore.points === points &&
+        chore.status === status &&
+        chore.assignee === assignee
+      )
+    );
+
+    // If the removal failed (because it couldn't find and remove the chore), it errors
+    if (group.chores.length === before) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    // Save the new group without the chore
+    await group.save();
+    res.json({ message: "Chore deleted", chores: group.chores });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 app.post("/api/group/updateName", async (req, res) => {
     try {
@@ -267,6 +409,8 @@ app.post("/api/user/updateName", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
 
 
 // start server
