@@ -4,6 +4,7 @@ import android.R.attr.name
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.Placeholder
@@ -83,10 +85,17 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
         Font(R.font.cooper_bt_bold)
     )
 
+    var toastMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(toastMessage) {
+        if (toastMessage != null) {
+            Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
     LaunchedEffect(Unit) {
         scope.launch {
             try {
@@ -215,9 +224,11 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                                         }
 
                                         Log.d("ChoresScreen", "Chore successfully deleted: ${chore.name}")
+                                        toastMessage = "Chore '${chore.name}' deleted successfully!"
                                     }
                                     catch(e: Exception){
                                         Log.e("ChoresScreen", "Error deleting chore: $e")
+                                        toastMessage = "Failed to delete chore: ${e.message}"
                                     }
 
                                 }
@@ -412,6 +423,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
 //                                    chores = chores + Triple(formattedName, points, description)
                                     val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
                                     val updatedChores = updatedResponse.group.chores ?: emptyList()
+                                    toastMessage = "Chore '$formattedName' created successfully!"
                                     chores = updatedChores.map { UiChore(
                                         name = it.name,
                                         description = it.description,
@@ -421,7 +433,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                                     ) }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
-
+                                    toastMessage = "Failed to create chore: ${e.message}"
                                 }
                                 finally{
                                     choreName = ""
@@ -457,13 +469,13 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                     }
                     TextButton(
                         onClick = {
-                        choreName = ""
-                        points = ""
-                        showDialog = false
+                            choreName = ""
+                            points = ""
+                            showDialog = false
                         },
                         colors = ButtonDefaults.textButtonColors(
-                        containerColor = buttonColor,
-                        contentColor = textColor
+                            containerColor = buttonColor,
+                            contentColor = textColor
                         )
                     ) {
                         Text("Cancel", fontFamily = CooperBt,) //font added
@@ -512,7 +524,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                     style = ParagraphStyle(
                         textIndent = TextIndent(restLine = 10.sp),
 
-                    ),
+                        ),
                     start = length,
                     end = length + bulletThree.length
                 )
@@ -657,6 +669,7 @@ fun ChoreCard(
             onDragEnd = {
                 if (swipeOffset.value < -maxDragXPx / 2) {
                     //deletion animation
+
                     scope.launch {
                         swipeOffset.animateTo(-size.width.toFloat(), tween(300))
                         cardAlpha.animateTo(0f, tween(100))
@@ -665,6 +678,7 @@ fun ChoreCard(
                 } else {
                     scope.launch {
                         swipeOffset.animateTo(0f, tween(200))
+
                     }
                 }
             },
@@ -768,7 +782,7 @@ fun ChoreCard(
                             maxLines = if (isExpanded) Int.MAX_VALUE else 1,
                             overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
 
-                        )
+                            )
                         Text(
                             text = username,
                             color = contentTint,
