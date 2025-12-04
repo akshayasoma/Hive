@@ -9,7 +9,7 @@ import retrofit2.http.POST
 object ApiClient {
     val instance: HiveApi by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.21.59.18:3000/") // change to your server base URL
+            .baseUrl("http://10.0.2.2:3000/")//.baseUrl("http://10.0.2.2:3000/") // change to your server base URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(HiveApi::class.java)

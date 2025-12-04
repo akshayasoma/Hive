@@ -5,6 +5,7 @@ import android.R.attr.name
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
@@ -89,8 +91,17 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
         Font(R.font.cooper_bt_bold)
     )
 
+    var toastMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(toastMessage) {
+        if (toastMessage != null) {
+            Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -204,9 +215,11 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                         }
 
                                         Log.d("GroceryScreen", "Grocery successfully deleted: ${grocery.name}")
+                                        toastMessage = "Grocery '${grocery.name}' deleted successfully!"
                                     }
                                     catch(e: Exception){
                                         Log.e("GroceryScreen", "Error deleting grocery: $e")
+                                        toastMessage = "Failed to delete chore: ${e.message}"
                                     }
 
                                 }
@@ -435,9 +448,10 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                             description = it.description,
                                             completed = it.completed
                                         ) }
+                                        toastMessage = "Grocery '$formattedName' added successfully!"
                                     } catch (e: Exception) {
                                         e.printStackTrace()
-
+                                        toastMessage = "Failed to add grocery: ${e.message}"
                                     }
                                     finally{
                                         itemName = ""
