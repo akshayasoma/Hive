@@ -83,7 +83,7 @@ Observer: <br>
 Coordinator: <br>
 
 #### Accomplishments:
-Kavya:<br>
+Kavya: Changed the Font throughout all screens. Added flying bee animation to the login screen. Fixed the text wrapping of the chores and grocery cards. Updated the camera UI.<br>
 Glenn:<br>
 Pranav:<br>
 Akshaya:<br>
