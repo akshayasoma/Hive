@@ -51,7 +51,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -260,7 +262,9 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                         Text(
                             text = "No groceries yet! Add groceries using the button below!",
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                            fontFamily = CooperBt, //font added
+                            //fontFamily = CooperBt, //font added
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
                             fontSize = 16.sp,
                             modifier = Modifier.padding(32.dp)
                         )
@@ -358,7 +362,15 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                         OutlinedTextField(
                             value = itemName,
                             onValueChange = { itemName = it },
-                            label = { Text("Item Name", fontFamily = CooperBt, color = textColor) },//font added
+                            label = {
+                                Text(
+                                    text = "Item Name",
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            },//font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -366,7 +378,15 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                         OutlinedTextField(
                             value = description,
                             onValueChange = { description = it },
-                            label = { Text("Description", fontFamily = CooperBt, color = textColor) },//font added
+                            label = {
+                                Text(
+                                    text = "Description",
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            },//font added
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -717,7 +737,8 @@ fun GroceryCard(
         ) {
             // Always visible section
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -739,7 +760,9 @@ fun GroceryCard(
                     fontFamily = CooperBt, //font added
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 12.dp)
+                    modifier = Modifier.padding(start = 12.dp),
+                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                    overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
                 )
             }
 
@@ -763,7 +786,9 @@ fun GroceryCard(
                     Text(
                         text = description,
                         color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
-                        fontFamily = CooperBt, //font added
+                        //fontFamily = CooperBt, //font added
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(top = 4.dp)
                     )

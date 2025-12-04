@@ -43,6 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -50,6 +54,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cs407.hive.R
 import com.cs407.hive.ui.screens.camera.CameraUiState
 import com.cs407.hive.ui.screens.camera.CameraViewModel
 import java.io.File
@@ -73,6 +78,11 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
     var useFrontCamera by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
 
     Box(
         modifier = Modifier
@@ -118,9 +128,12 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Camera permission is required to use this feature.")
+                Text("Camera permission is required to use this feature.", fontFamily = CooperBt) //font added
                 Spacer(Modifier.height(12.dp))
-                Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) { Text("Grant permission") }
+                Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                    Text("Grant permission", fontFamily = CooperBt) //font added
+
+                }
             }
         }
 
@@ -186,7 +199,7 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                     ) {
                         CircularProgressIndicator()
                         Spacer(Modifier.height(12.dp))
-                        Text(s.message, textAlign = TextAlign.Center)
+                        Text(s.message, textAlign = TextAlign.Center, fontFamily = CooperBt) //font added
                     }
                 }
             }
@@ -203,6 +216,7 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                     ) {
                         Text(
                             text = if (hasIngredients) "Ingredients detected" else "No ingredients found",
+                            fontFamily = CooperBt, //font added
                             style = MaterialTheme.typography.titleMedium
                         )
                         Spacer(Modifier.height(8.dp))
@@ -211,6 +225,8 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                                 detected.forEach { ingredient ->
                                     Text(
                                         "- $ingredient",
+                                        fontWeight = FontWeight.Bold,
+                                        fontStyle = FontStyle.Italic,
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
@@ -218,6 +234,8 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                         } else {
                             Text(
                                 "Try retaking the photo with clearer lighting.",
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -230,7 +248,7 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                                 modifier = Modifier.weight(1f),
                                 onClick = { viewModel.reset() },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                            ) { Text("Cancel") }
+                            ) { Text("Cancel", fontFamily = CooperBt) } //font added
                             Button(
                                 modifier = Modifier.weight(1f),
                                 enabled = hasIngredients,
@@ -241,7 +259,7 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                                     viewModel.reset()
                                     onNavigateToRecipe()
                                 }
-                            ) { Text("Confirm") }
+                            ) { Text("Confirm", fontFamily = CooperBt) } //font added
                         }
                     }
                 }
@@ -255,9 +273,9 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Error:", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                        Text("Error:", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontFamily = CooperBt) //font added
                         Spacer(Modifier.height(8.dp))
-                        Text(s.error, color = MaterialTheme.colorScheme.error)
+                        Text(s.error, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic)
                         Spacer(Modifier.height(16.dp))
                         Button(onClick = { viewModel.reset() }) { Text("Close") }
                     }

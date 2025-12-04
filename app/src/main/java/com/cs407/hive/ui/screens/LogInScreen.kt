@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
 import android.provider.Settings
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +36,15 @@ import com.cs407.hive.data.network.ApiClient
 import kotlinx.coroutines.launch
 import java.io.IOException
 import androidx.compose.runtime.getValue
-
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.cs407.hive.R
 
 
 @Composable
@@ -45,6 +55,20 @@ fun LogInScreen(onNavigateToCreate: () -> Unit,
     val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
     var isChecking by remember { mutableStateOf(true) }
+
+    //bee animation
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.bee_flying_single)
+    )
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
+
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -69,47 +93,107 @@ fun LogInScreen(onNavigateToCreate: () -> Unit,
             .background(color = MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Button(
-                onClick = {onNavigateToCreate()},
+            Box(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .height(100.dp),      // taller button
-                shape = RoundedCornerShape(20.dp), // rounded rectangle
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    .height(100.dp)
             ) {
-                Text(
-                    text = "CREATE",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 60.sp,
+                Button(
+                    onClick = {onNavigateToCreate()},
+                    modifier = Modifier
+                        .matchParentSize()
+                        .height(100.dp),      // taller button
+                    shape = RoundedCornerShape(20.dp), // rounded rectangle
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = "CREATE",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontFamily = CooperBt, //font added
+                        fontSize = 55.sp,
+                    )
+                }
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier
+                        .size(70.dp)
+                        .graphicsLayer {
+                            scaleX = 2.5f
+                            scaleY = 2.5f
+                        }
+                        .align(Alignment.TopStart)             // top-left corner
+                        .offset(x = (-15).dp, y = (-25).dp)
                 )
+
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Button(
-                onClick = { onNavigateToJoin() },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .height(100.dp),      // taller button
-                shape = RoundedCornerShape(20.dp), // rounded rectangle
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    .height(100.dp)
             ) {
-                Text(
-                    text = "JOIN",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 60.sp
+                Button(
+                    onClick = { onNavigateToJoin() },
+                    modifier = Modifier
+                        .matchParentSize()
+                        .height(100.dp),      // taller button
+                    shape = RoundedCornerShape(20.dp), // rounded rectangle
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = "JOIN",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontFamily = CooperBt, //font added
+                        fontSize = 55.sp
+                    )
+                }
+
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier
+                        .size(70.dp)
+                        .graphicsLayer {
+                            scaleX = -2.5f
+                            scaleY = 2.5f
+                        }
+                        .align(Alignment.BottomEnd)             // top-left corner
+                        .offset(x = (-15).dp, y = (0).dp)
                 )
             }
         }
     }
+}
+
+@Composable
+fun BeeAnimationSingle() {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.bee_flying_single)
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
+
+    LottieAnimation(
+        composition = composition,
+        progress = { progress },
+        modifier = Modifier
+            .size(180.dp)
+    )
 }
 
 @Preview(

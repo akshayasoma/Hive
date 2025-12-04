@@ -71,6 +71,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import com.cs407.hive.MainActivity
 import com.cs407.hive.data.local.clearGroupId
 import com.cs407.hive.data.local.saveGroupId
@@ -107,6 +109,11 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
+
     // 1) These hold the live database data
     var user by remember { mutableStateOf<UserDetail?>(null) }
     var userOrig by remember { mutableStateOf<UserDetail?>(null) }
@@ -136,7 +143,10 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Loading...", color = MaterialTheme.colorScheme.onSecondary)
+            Text("Loading...",
+                color = MaterialTheme.colorScheme.onSecondary,
+                fontFamily = CooperBt //font added
+            )
         }
         return
     }
@@ -235,7 +245,13 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = currentUserName,
                         onValueChange = { currentUserName = it },
-                        label = { Text("Username", color = MaterialTheme.colorScheme.onSecondary) },
+                        label = {
+                            Text(
+                                "Username",
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                fontFamily = CooperBt
+                            )
+                        }, //font added
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -255,7 +271,8 @@ fun SettingsScreen(
                         label = {
                             Text(
                                 "Group Name",
-                                color = MaterialTheme.colorScheme.onSecondary
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                fontFamily = CooperBt //font added
                             )
                         },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
@@ -275,7 +292,13 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = TextFieldValue(currentGroupId),
                         onValueChange = {}, //Read Only
-                        label = { Text("Group ID", color = MaterialTheme.colorScheme.onSecondary) },
+                        label = {
+                            Text(
+                                "Group ID",
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                fontFamily = CooperBt
+                            )
+                        }, //font added
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onPrimary,
@@ -405,7 +428,8 @@ fun SettingsScreen(
                     label = {
                         Text(
                             if (editable) "Save" else "Edit",
-                            color = MaterialTheme.colorScheme.onSecondary
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontFamily = CooperBt //font Added
                         )
                     },
                     leadingIcon = {

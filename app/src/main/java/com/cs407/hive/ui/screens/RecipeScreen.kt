@@ -58,6 +58,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import com.cs407.hive.R
 
 data class RecipeNote(
     val id: String,
@@ -84,6 +88,11 @@ fun RecipeScreen(
     var showRecipes by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("None") }
     var expandedRecipeId by remember { mutableStateOf<String?>(null) }
+
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
 
     // Hardcoded recipe notes
     val hardcodedRecipes = remember {
@@ -209,6 +218,7 @@ fun RecipeScreen(
             // Header
             Text(
                 text = "RECIPE",
+                fontFamily = CooperBt, //font added
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondary
@@ -220,6 +230,7 @@ fun RecipeScreen(
             if (myIngredients.isNotEmpty()) {
                 Text(
                     text = "My Ingredients",
+                    fontFamily = CooperBt, //font added
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondary,
@@ -252,6 +263,7 @@ fun RecipeScreen(
                 ) {
                     Text(
                         text = "Recipe Suggestions",
+                        fontFamily = CooperBt, //font added
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSecondary
@@ -260,6 +272,8 @@ fun RecipeScreen(
                     if (sortOption != "None") {
                         Text(
                             text = "Sorted by: $sortOption",
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f)
                         )
@@ -288,6 +302,8 @@ fun RecipeScreen(
                             item {
                                 Text(
                                     text = uiState.errorMessage ?: "",
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
                                     color = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.padding(32.dp)
                                 )
@@ -326,6 +342,8 @@ fun RecipeScreen(
                             Text(
                                 text = "Add ingredients you have to find recipes!",
                                 color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
                                 fontSize = 16.sp,
                                 modifier = Modifier.padding(32.dp)
                             )
@@ -333,6 +351,8 @@ fun RecipeScreen(
                             Text(
                                 text = "Click 'Find Recipes' to see recipe suggestions!",
                                 color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
                                 fontSize = 16.sp,
                                 modifier = Modifier.padding(32.dp)
                             )
@@ -362,6 +382,7 @@ fun RecipeScreen(
             ) {
                 Text(
                     text = "Find Recipes",
+                    fontFamily = CooperBt, //font added
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -444,13 +465,19 @@ fun RecipeScreen(
             }
             AlertDialog(
                 onDismissRequest = { showAddIngredientDialog = false },
-                title = { Text("Add a New Ingredient") },
+                title = { Text("Add a New Ingredient", fontFamily = CooperBt) }, //font added
                 text = {
                     Column {
                         OutlinedTextField(
                             value = ingredientName,
                             onValueChange = { ingredientName = it },
-                            label = { Text("Ingredient Name", color = textColor) },
+                            label = {
+                                Text("Ingredient Name",
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                                    },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -481,7 +508,7 @@ fun RecipeScreen(
                             contentColor = textColor
                         )
                     ) {
-                        Text("Add")
+                        Text("Add", fontFamily = CooperBt) //font added
                     }
                 },
                 dismissButton = {
@@ -505,7 +532,7 @@ fun RecipeScreen(
                             contentColor = textColor
                         )
                     ) {
-                        Text("Cancel")
+                        Text("Cancel", fontFamily = CooperBt) //font added
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.onPrimary,
@@ -529,6 +556,7 @@ fun RecipeScreen(
                     ) {
                         Text(
                             text = "Sort Recipes By",
+                            fontFamily = CooperBt, //font added
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondary
@@ -564,6 +592,8 @@ fun RecipeScreen(
                                         else -> option
                                     },
                                     color = MaterialTheme.colorScheme.onSecondary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
                                     fontSize = 16.sp
                                 )
                             }
@@ -679,6 +709,7 @@ fun RecipeScreen(
                     ) {
                         Text(
                             text = "HOW TO USE",
+                            fontFamily = CooperBt, //font added
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondary
@@ -688,6 +719,7 @@ fun RecipeScreen(
 
                         Text(
                             text = infoText,
+                            fontFamily = CooperBt, //font added
                             inlineContent = inlineContent,
                             color = MaterialTheme.colorScheme.onSecondary,
                             fontSize = 16.sp
@@ -719,6 +751,8 @@ fun IngredientChip(ingredient: String, onDelete: () -> Unit) {
             Text(
                 text = ingredient,
                 color = MaterialTheme.colorScheme.onSecondary,
+                fontWeight = FontWeight.Bold,
+                fontStyle = FontStyle.Italic,
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -739,6 +773,11 @@ fun IngredientChip(ingredient: String, onDelete: () -> Unit) {
 
 @Composable
 fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -757,6 +796,7 @@ fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
                 Text(
                     text = recipe.dishName.uppercase(),
                     color = MaterialTheme.colorScheme.onSecondary,
+                    fontFamily = CooperBt, //font added
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -764,8 +804,10 @@ fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
                 Text(
                     text = "${recipe.difficulty} • ${recipe.cookingTime}",
                     color = getDifficultyColor(recipe.difficulty),
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+                    //fontWeight = FontWeight.Medium
                 )
             }
             Icon(
@@ -779,6 +821,7 @@ fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
             Column(modifier = Modifier.padding(top = 12.dp)) {
                 Text(
                     text = "Ingredients",
+                    fontFamily = CooperBt, //font added
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondary
@@ -787,11 +830,14 @@ fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
                 Text(
                     text = recipe.ingredients,
                     color = MaterialTheme.colorScheme.onSecondary,
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic,
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "Instructions",
+                    fontFamily = CooperBt, //font added
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondary
@@ -800,6 +846,8 @@ fun RecipeCard(recipe: RecipeNote, isExpanded: Boolean, onToggle: () -> Unit) {
                 Text(
                     text = recipe.instructions,
                     color = MaterialTheme.colorScheme.onSecondary,
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic,
                     fontSize = 14.sp
                 )
             }
