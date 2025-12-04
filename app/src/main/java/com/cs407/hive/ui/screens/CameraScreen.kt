@@ -12,15 +12,20 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Close
@@ -32,6 +37,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -83,6 +89,24 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+
+    val textColor = if (isSystemInDarkTheme()) {
+        MaterialTheme.colorScheme.onTertiary
+    } else {
+        MaterialTheme.colorScheme.onSecondary
+    }
+
+    val buttonColor = if (isSystemInDarkTheme()) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onTertiary
+    }
+
+    val buttonColor2 = if (isSystemInDarkTheme()) {
+        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+    }
 
     Box(
         modifier = Modifier
@@ -148,14 +172,29 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onNavigateToRecipe ) { Icon(Icons.Default.Close, contentDescription = "Back") }
+                Button(onClick = onNavigateToRecipe, shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier
+                        .padding(top = 20.dp)
+                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
+                        .size(40.dp)
+
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSecondary)
+                }
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                IconButton(
+                Button(
                     onClick = {
                         imageCapture?.let { capture ->
                             try {
@@ -179,8 +218,19 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                                 )
                             } catch (_: Throwable) { /* ignore */ }
                         }
-                    }
-                ) { Icon(Icons.Default.PhotoCamera, contentDescription = "Take Photo") }
+                    },
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier.size(60.dp)
+                ) {
+                    Icon(Icons.Default.PhotoCamera,
+                        contentDescription = "Take Photo",
+                        tint = MaterialTheme.colorScheme.onSecondary
+                    )
+                }
             }
         }
 
@@ -190,95 +240,128 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
                     onDismissRequest = {},
                     properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,   // <-- Rounded corners
+                        tonalElevation = 3.dp,
+                        shadowElevation = 6.dp
                     ) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(12.dp))
-                        Text(s.message, textAlign = TextAlign.Center, fontFamily = CooperBt) //font added
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onSecondary)
+                            Spacer(Modifier.height(12.dp))
+                            Text(s.message, textAlign = TextAlign.Center, fontFamily = CooperBt, color = MaterialTheme.colorScheme.onSecondary) //font added
+                        }
                     }
+
                 }
             }
             is CameraUiState.Success -> {
                 val detected = s.ingredients
                 val hasIngredients = detected.isNotEmpty()
                 androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.reset() }) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,   // <-- Rounded corners
+                        tonalElevation = 3.dp,
+                        shadowElevation = 6.dp
                     ) {
-                        Text(
-                            text = if (hasIngredients) "Ingredients detected" else "No ingredients found",
-                            fontFamily = CooperBt, //font added
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        if (hasIngredients) {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                detected.forEach { ingredient ->
-                                    Text(
-                                        "- $ingredient",
-                                        fontWeight = FontWeight.Bold,
-                                        fontStyle = FontStyle.Italic,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            }
-                        } else {
-                            Text(
-                                "Try retaking the photo with clearer lighting.",
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Button(
-                                modifier = Modifier.weight(1f),
-                                onClick = { viewModel.reset() },
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                            ) { Text("Cancel", fontFamily = CooperBt) } //font added
-                            Button(
-                                modifier = Modifier.weight(1f),
-                                enabled = hasIngredients,
-                                onClick = {
-                                    if (hasIngredients) {
-                                        recipeViewModel.addIngredients(detected)
+                            Text(
+                                text = if (hasIngredients) "Ingredients detected" else "No ingredients found",
+                                fontFamily = CooperBt, //font added
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSecondary
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            if (hasIngredients) {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    detected.forEach { ingredient ->
+                                        Text(
+                                            "- $ingredient",
+                                            fontWeight = FontWeight.Bold,
+                                            fontStyle = FontStyle.Italic,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = textColor
+
+                                        )
                                     }
-                                    viewModel.reset()
-                                    onNavigateToRecipe()
                                 }
-                            ) { Text("Confirm", fontFamily = CooperBt) } //font added
+                            } else {
+                                Text(
+                                    "Try retaking the photo with clearer lighting.",
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    textAlign = TextAlign.Center,
+                                    color = textColor
+                                )
+                            }
+                            Spacer(Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { viewModel.reset() },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        containerColor = buttonColor2,
+                                        contentColor = textColor
+                                    )
+                                ) { Text("Cancel", fontFamily = CooperBt) } //font added
+                                Button(
+                                    modifier = Modifier.weight(1f),
+                                    enabled = hasIngredients,
+                                    onClick = {
+                                        if (hasIngredients) {
+                                            recipeViewModel.addIngredients(detected)
+                                        }
+                                        viewModel.reset()
+                                        onNavigateToRecipe()
+                                    },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.onPrimary,
+                                        contentColor = textColor
+                                    )
+                                ) { Text("Confirm", fontFamily = CooperBt) } //font added
+                            }
                         }
                     }
+
                 }
             }
             is CameraUiState.Error -> {
                 androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.reset() }) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,   // <-- Rounded corners
+                        tonalElevation = 3.dp,
+                        shadowElevation = 6.dp
                     ) {
-                        Text("Error:", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontFamily = CooperBt) //font added
-                        Spacer(Modifier.height(8.dp))
-                        Text(s.error, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic)
-                        Spacer(Modifier.height(16.dp))
-                        Button(onClick = { viewModel.reset() }) { Text("Close") }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Error:", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontFamily = CooperBt) //font added
+                            Spacer(Modifier.height(8.dp))
+                            Text(s.error, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic)
+                            Spacer(Modifier.height(16.dp))
+                            Button(onClick = { viewModel.reset() }) { Text("Close") }
+                        }
                     }
+
                 }
             }
             else -> {}

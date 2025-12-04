@@ -180,7 +180,7 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                             description = grocery.description,
                             deleteMode = deleteMode,
                             onDelete = {
-                                //TODO: Delete the Grocery in db
+                                //DONE: Delete the Grocery in db
                                 scope.launch {
                                     try{
                                         val deleteGrocery = DeleteGroceryRequest(
@@ -224,7 +224,7 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                             description = grocery.description,
                             deleteMode = deleteMode,
                             onDelete = {
-                                //TODO: Delete the Grocery in db
+                                //DONE: Delete the Grocery in db
                                 scope.launch {
                                     try{
                                         val deleteGrocery = DeleteGroceryRequest(
