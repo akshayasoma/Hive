@@ -50,8 +50,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -227,7 +229,9 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         Text(
                             text = "No chores yet! Add chores using the button below!",
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                            fontFamily = CooperBt, //font added
+                            //fontFamily = CooperBt, //font added
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
                             fontSize = 16.sp,
                             modifier = Modifier.padding(32.dp)
                         )
@@ -326,7 +330,15 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = choreName,
                             onValueChange = { choreName = it },
-                            label = { Text("Chore Name", fontFamily = CooperBt, color = textColor) }, //font added
+                            label = {
+                                Text(
+                                    text = "Chore Name",
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            }, //font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -334,7 +346,15 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = points,
                             onValueChange = { points = it },
-                            label = { Text("Points", fontFamily = CooperBt, color = textColor) }, //font added
+                            label = {
+                                Text(
+                                    text = "Points",
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            }, //font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -342,7 +362,15 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = description,
                             onValueChange = { description = it },
-                            label = { Text("Description", fontFamily = CooperBt, color = textColor) }, //font added
+                            label = {
+                                Text(
+                                    text = "Description",
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            }, //font added
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -693,12 +721,8 @@ fun ChoreCard(
 
     Card(
         modifier = cardGraphicsModifier,
-//        modifier = modifier
-//            .fillMaxWidth(0.9f)
-//            .clickable { isExpanded = !isExpanded },
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
-            //containerColor = MaterialTheme.colorScheme.onPrimary
             containerColor = interpolatedColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -711,8 +735,10 @@ fun ChoreCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
+
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)) {
                     // Profile icon
                     Box(
                         modifier = Modifier
@@ -738,13 +764,20 @@ fun ChoreCard(
                             color = contentTint,
                             fontFamily = CooperBt, //font added
                             fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                            overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
+
                         )
                         Text(
                             text = username,
                             color = contentTint,
-                            fontFamily = CooperBt, //font added
-                            fontSize = 14.sp
+                            //fontFamily = CooperBt, //font added
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
+                            maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                            overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -755,13 +788,16 @@ fun ChoreCard(
                         color = contentTint,
                         fontFamily = CooperBt, //font added
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
                     )
                     Text(
                         text = status,
                         color = contentTint,
-                        fontFamily = CooperBt, //font added
-                        fontSize = 14.sp
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
+                        maxLines = 1,
                     )
                 }
             }
@@ -787,8 +823,10 @@ fun ChoreCard(
                     Text(
                         text = description,
                         color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
-                        fontFamily = CooperBt, //font added
+                        //fontFamily = CooperBt, //font added
                         fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
