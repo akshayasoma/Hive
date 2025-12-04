@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema({
            type: Number,
            default: 0
          },
-  profilePic: {
+  profilePicture: {
                type: String,
                default: ""
              },
@@ -175,7 +175,7 @@ app.post("/api/groups", async (req, res) => {
         userId: creatorId,
         name: creatorName,
         points: 0,
-        profilePic: "",
+        profilePicture: "",
       });
 
       await user.save();
@@ -226,7 +226,7 @@ app.post("/api/group/join", async (req, res) => {
         userId: deviceId,
         name: userName,
         points: 0,
-        profilePic: "",
+        profilePicture: "",
       });
       await user.save();
     }
