@@ -49,6 +49,8 @@ import androidx.compose.ui.res.stringResource
 import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,6 +72,11 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
     var userName by remember { mutableStateOf(TextFieldValue("")) }
 
     val scope = rememberCoroutineScope()
+
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
 
     Box(
         modifier = Modifier
@@ -123,6 +130,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                     label = {
                         Text(
                             text = stringResource(id = R.string.group_name),
+                            fontFamily = CooperBt, //font added
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
@@ -161,6 +169,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                     label = {
                         Text(
                             text = stringResource(id = R.string.username),
+                            fontFamily = CooperBt, //font added
                             color = MaterialTheme.colorScheme.onSecondary
                         ) },
                     textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSecondary),
@@ -227,12 +236,6 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                 // Save Button (Tick Icon)
                 Button(
                     onClick = {
-//                        val room = mapOf(
-//                            "groupName" to groupName.text,
-//                            "creatorName" to userName.text,
-//                            "groupId" to UUID.randomUUID().toString(),
-//                            "peopleList" to listOf(userName.text)
-//                        )
                         scope.launch {
                             try {
                                 val room = GroupRequest(

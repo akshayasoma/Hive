@@ -2,6 +2,7 @@ package com.cs407.hive.ui.screens
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,11 +50,13 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.ui.theme.HiveTheme
 import com.google.android.gms.games.leaderboard.Leaderboard
 import com.cs407.hive.R
-
+import com.cs407.hive.data.model.UserDetail
+import com.cs407.hive.data.network.ApiClient
 
 
 @Composable
-fun HomeScreen (onNavigateToChores: () -> Unit,
+fun HomeScreen (deviceId: String,
+                onNavigateToChores: () -> Unit,
                 onNavigateToGrocery: () -> Unit,
                 onNavigateToRecipe: () -> Unit,
                 onNavigateToSettings: () -> Unit,
@@ -62,6 +70,19 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
 //    } else {
 //        userName
 //    }
+    var user by remember { mutableStateOf<UserDetail?>(null) }
+
+    LaunchedEffect(Unit) {
+        try {
+            Log.d("SettingsScreen", "LaunchedEffect STARTED")
+            val userResp = ApiClient.instance.getUser(mapOf("userId" to deviceId))
+            Log.d("SettingsScreen", "Fetched user = ${userResp.user}")
+            user = userResp.user
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
@@ -156,7 +177,7 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = userName,
+                                text = user?.name ?: "...",
                                 modifier = Modifier.weight(1f),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
@@ -274,36 +295,37 @@ fun HomeScreen (onNavigateToChores: () -> Unit,
 
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    uiMode = UI_MODE_NIGHT_YES,
-    name = "Dark Mode"
-)
-@Composable
-fun HomeScreenPreviewDark() {
-    HiveTheme(dynamicColor = false) {
-        HomeScreen( onNavigateToChores = {},
-                    onNavigateToGrocery = {},
-                    onNavigateToRecipe = {},
-                    onNavigateToSettings = {},
-                    onNavigateToLeaderboard = {})
-    }
-}
+//@Preview(
+//    showBackground = true,
+//    showSystemUi = true,
+//    uiMode = UI_MODE_NIGHT_YES,
+//    name = "Dark Mode"
+//)
+//
+//@Composable
+//fun HomeScreenPreviewDark() {
+//    HiveTheme(dynamicColor = false) {
+//        HomeScreen( onNavigateToChores = {},
+//                    onNavigateToGrocery = {},
+//                    onNavigateToRecipe = {},
+//                    onNavigateToSettings = {},
+//                    onNavigateToLeaderboard = {})
+//    }
+//}
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    uiMode = UI_MODE_NIGHT_NO,
-    name = "Light Mode"
-)
-@Composable
-fun HomeScreenPreviewLight() {
-    HiveTheme(dynamicColor = false) {
-        HomeScreen(onNavigateToChores = {},
-                    onNavigateToGrocery = {},
-                    onNavigateToRecipe = {},
-                    onNavigateToSettings = {},
-                    onNavigateToLeaderboard = {})
-    }
-}
+//@Preview(
+//    showBackground = true,
+//    showSystemUi = true,
+//    uiMode = UI_MODE_NIGHT_NO,
+//    name = "Light Mode"
+//)
+//@Composable
+//fun HomeScreenPreviewLight() {
+//    HiveTheme(dynamicColor = false) {
+//        HomeScreen(onNavigateToChores = {},
+//                    onNavigateToGrocery = {},
+//                    onNavigateToRecipe = {},
+//                    onNavigateToSettings = {},
+//                    onNavigateToLeaderboard = {})
+//    }
+//}

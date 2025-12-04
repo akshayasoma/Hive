@@ -139,6 +139,7 @@ fun AppNavigation(
         }
         composable("home"){
             HomeScreen(
+                deviceId = deviceId,
                 onNavigateToChores = { navController.navigate("chore")},
                 onNavigateToGrocery = { navController.navigate("grocery")},
                 onNavigateToRecipe = { navController.navigate("recipe")},

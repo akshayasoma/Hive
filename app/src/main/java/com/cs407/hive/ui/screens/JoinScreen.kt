@@ -50,6 +50,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -72,6 +74,10 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
     var userName by remember { mutableStateOf(TextFieldValue("")) }
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
 
     Box(
         modifier = Modifier
@@ -126,6 +132,7 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                     label = {
                         Text(
                             text = stringResource(id = R.string.username),
+                            fontFamily = CooperBt, //font added
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
@@ -169,6 +176,7 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                     label = {
                         Text(
                             text = stringResource(id = R.string.group_id),
+                            fontFamily = CooperBt, //font added
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                     },
@@ -325,6 +333,7 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                         text = "Enter your username and group ID to join a group. " +
                                 "If you don’t have one, use the Create option.",
                         color = MaterialTheme.colorScheme.onSurface,
+                        fontFamily = CooperBt, //font added
                         fontSize = 16.sp
                     )
                 }
