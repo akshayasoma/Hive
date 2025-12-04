@@ -1,8 +1,10 @@
 package com.cs407.hive.ui.screens
 
 import android.R.attr.checked
+import android.R.attr.name
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -55,27 +57,58 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.R
+import com.cs407.hive.data.model.AddChoreRequest
+import com.cs407.hive.data.model.AddGroceryRequest
+import com.cs407.hive.data.model.DeleteChoreRequest
+import com.cs407.hive.data.model.DeleteGroceryRequest
+import com.cs407.hive.data.model.UiChore
+import com.cs407.hive.data.model.UiGrocery
+import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.ui.theme.HiveTheme
 import kotlinx.coroutines.launch
 import kotlin.collections.plus
 import kotlin.math.roundToInt
 
 @Composable
-fun GroceryScreen(onNavigateToHome: () -> Unit) {
+fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     var itemName by remember { mutableStateOf("") }
     var isDone by remember { mutableStateOf(false) }
     var description by remember { mutableStateOf("") }
-    var groceries by remember { mutableStateOf(listOf<Triple<String, Boolean, String>>()) }
+//    var groceries by remember { mutableStateOf(listOf<Triple<String, Boolean, String>>()) }
+    var groceries by remember { mutableStateOf(listOf<UiGrocery>()) }
     var showInfo by remember { mutableStateOf(false) }
 
     val (completedGroceries, notCompletedGroceries) = remember(groceries) {
-        groceries.partition { it.second } // it.second is the isDone boolean
+        groceries.partition { it.completed }
     }
     var deleteMode by remember { mutableStateOf(false) }
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+
+    val api = remember { ApiClient.instance }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = api.getGroup(mapOf("groupId" to groupId))
+                val serverGroceries = response.group.groceries ?: emptyList()
+
+                groceries = serverGroceries.map { grocery ->
+                    UiGrocery(
+                        name = grocery.name,
+                        description = grocery.description,
+                        completed = grocery.completed
+                    )
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -135,26 +168,90 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
                 if (notCompletedGroceries.isNotEmpty() || completedGroceries.isNotEmpty()) {
-                    items(notCompletedGroceries.reversed()) { (name, isDone, desc) ->
+                    items(
+                        items=notCompletedGroceries.reversed(),
+                        key={grocery -> "${grocery.name}/${grocery.description}/${grocery.completed}"}
+                        ) { grocery ->
                         GroceryCard(
-                            item = name,
-                            status = isDone,
-                            description = desc,
+                            item = grocery.name,
+                            status = grocery.completed,
+                            description = grocery.description,
                             deleteMode = deleteMode,
                             onDelete = {
-                                //TODO: Delete the Chore in db
+                                //TODO: Delete the Grocery in db
+                                scope.launch {
+                                    try{
+                                        val deleteGrocery = DeleteGroceryRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = grocery.name,
+                                            description = grocery.description,
+                                            completed = grocery.completed
+                                        )
+                                        api.deleteGrocery(deleteGrocery)
+
+                                        val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
+                                        val updatedGroceries = updatedResponse.group.groceries ?: emptyList()
+
+                                        groceries = updatedGroceries.map {
+                                            UiGrocery(
+                                                name = it.name,
+                                                description = it.description,
+                                                completed = it.completed
+                                            )
+                                        }
+
+                                        Log.d("GroceryScreen", "Grocery successfully deleted: ${grocery.name}")
+                                    }
+                                    catch(e: Exception){
+                                        Log.e("GroceryScreen", "Error deleting grocery: $e")
+                                    }
+
+                                }
                             }
 
                         )
                     }
-                    items(completedGroceries.reversed()) { (name, isDone, desc) ->
+                    items(
+                        items = completedGroceries.reversed(),
+                        key={grocery -> "${grocery.name}/${grocery.description}/${grocery.completed}"}
+                    ) { grocery ->
                         GroceryCard(
-                            item = name,
-                            status = isDone,
-                            description = desc,
+                            item = grocery.name,
+                            status = grocery.completed,
+                            description = grocery.description,
                             deleteMode = deleteMode,
                             onDelete = {
-                                //TODO: Delete the Chore in db
+                                //TODO: Delete the Grocery in db
+                                scope.launch {
+                                    try{
+                                        val deleteGrocery = DeleteGroceryRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = grocery.name,
+                                            description = grocery.description,
+                                            completed = grocery.completed
+                                        )
+                                        api.deleteGrocery(deleteGrocery)
+
+                                        val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
+                                        val updatedGroceries = updatedResponse.group.groceries ?: emptyList()
+
+                                        groceries = updatedGroceries.map {
+                                            UiGrocery(
+                                                name = it.name,
+                                                description = it.description,
+                                                completed = it.completed
+                                            )
+                                        }
+
+                                        Log.d("GroceryScreen", "Grocery successfully deleted: ${grocery.name}")
+                                    }
+                                    catch(e: Exception){
+                                        Log.e("GroceryScreen", "Error deleting grocery: $e")
+                                    }
+
+                                }
                             }
                         )
                     }
@@ -295,10 +392,42 @@ fun GroceryScreen(onNavigateToHome: () -> Unit) {
                             if (itemName.isNotBlank()) {
                                 val formattedName = itemName.split(" ")
                                     .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                                groceries = groceries + Triple(formattedName, false, description)
+
+                                val request = AddGroceryRequest(
+                                    groupId = groupId,
+                                    deviceId = deviceId,
+                                    name = formattedName,
+                                    description = description,
+                                    completed = false
+
+                                )
+
+                                scope.launch {
+                                    try{
+                                        api.addGrocery(request)
+                                        Log.d("GroceryScreen", "Grocery added: $formattedName, $description")
+
+//                                    chores = chores + Triple(formattedName, points, description)
+                                        val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
+                                        val updatedGroceries = updatedResponse.group.groceries ?: emptyList()
+                                        groceries = updatedGroceries.map { UiGrocery(
+                                            name = it.name,
+                                            description = it.description,
+                                            completed = it.completed
+                                        ) }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+
+                                    }
+                                    finally{
+                                        itemName = ""
+                                        description = ""
+                                    }
+                                }
+
+//                                groceries = groceries + UiGrocery(name = formattedName, description = description, completed = false)//Triple(formattedName, false, description)
                             }
-                            itemName = ""
-                            description = ""
+
                             showDialog = false
                         },
                         colors = ButtonDefaults.textButtonColors(
@@ -648,7 +777,7 @@ fun GroceryCard(
 @Composable
 fun GroceryPreviewLight() {
     HiveTheme(dynamicColor = false) {
-        GroceryScreen( onNavigateToHome = {})
+        GroceryScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
     }
 }
 
@@ -656,6 +785,6 @@ fun GroceryPreviewLight() {
 @Composable
 fun GroceryPreviewDark() {
     HiveTheme(dynamicColor = false) {
-        GroceryScreen (onNavigateToHome = {})
+        GroceryScreen (deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
     }
 }

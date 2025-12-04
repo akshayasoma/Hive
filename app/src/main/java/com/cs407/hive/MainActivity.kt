@@ -156,6 +156,8 @@ fun AppNavigation(
 
         composable("grocery"){
             GroceryScreen(
+                deviceId = deviceId,
+                groupId = groupId!!,
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
