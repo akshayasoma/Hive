@@ -31,6 +31,7 @@ const groupSchema = new mongoose.Schema({
         name: { type: String, required: true },
         description: { type: String, default: "" },
         quantity: { type: Number, default: 1 },
+        completed: { type: Boolean, default: false }
       }
     ],
 
@@ -255,24 +256,25 @@ app.post("/api/group/get", async (req, res) => {
 
 app.post("/api/group/addGrocery", async (req, res) => {
     try {
-        const { groupId, deviceId, name, description = "", quantity = 1 } = req.body;
-
+        const { groupId, deviceId, name, description = "", quantity = 1, completed = false } = req.body;
+        console.log("Adding grocery with groupId: ", groupId, " deviceId: ", deviceId, " name: ", name, " description: ", description)
         if (!groupId || !deviceId || !name) {
           return res.status(400).json({ error: "groupId, deviceId, and name are required" });
         }
-
+        console.log("Finding Group")
         const group = await Group.findOne({ groupId });
         if (!group) return res.status(404).json({ error: "Group not found" });
-
+        console.log("Checking AUTH")
         // AUTH CHECK
         if (!group.peopleList.includes(deviceId)) {
           return res.status(403).json({ error: "User not authorized for this group" });
         }
-
+        console.log("PUSHING")
         group.groceries.push({
           name,
           description,
-          quantity
+          quantity,
+          completed
         });
 
         await group.save();
@@ -280,6 +282,49 @@ app.post("/api/group/addGrocery", async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.post("/api/group/deleteGrocery", async (req, res) => {
+  try {
+    const { groupId, deviceId, name, description, quantity = 1, completed } = req.body;
+    console.log("Deleting grcery with: ", groupId, deviceId, name, description, quantity, completed)
+    // Make sure the required arguments are included
+    if (!groupId || !deviceId || !name) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    console.log("Getting Group")
+    // Find group to delete from
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    console.log("Auth check")
+    // Make sure the user actually belongs to the group
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    console.log("Grocery Deletion")
+    // Delete the grocery
+    const before = group.groceries.length;
+
+    group.groceries = group.groceries.filter(item =>
+      !(
+        item.name === name &&
+        item.description === (description ?? "") &&
+        item.quantity === quantity &&
+        item.completed === completed
+      )
+    );
+    // If no grocery was removed, then 404
+    if (group.groceries.length === before) {
+      return res.status(404).json({ error: "Grocery item not found" });
+    }
+    console.log("Grocery Deleted Successfully")
+    // Save changes
+    await group.save();
+    res.json({ message: "Grocery deleted", groceries: group.groceries });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/api/group/addChore", async (req, res) => {

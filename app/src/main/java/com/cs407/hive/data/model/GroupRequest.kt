@@ -40,7 +40,8 @@ data class GroupDetail(
     val creatorId: String,
     val groupId: String,
     val peopleList: List<String>,
-    val chores: List<ChoreItem>? = emptyList()
+    val chores: List<ChoreItem>? = emptyList(),
+    val groceries: List<GroceryItem>? = emptyList()
 )
 
 data class AddChoreRequest(
@@ -96,4 +97,32 @@ data class UiChore(
     val points: Int,
     val status: Int,
     val assignee: String
+)
+
+data class UiGrocery(
+    val name: String,
+    val description: String,
+    val completed: Boolean
+)
+
+data class GroceryItem(
+    val name: String,
+    val description: String,
+    val completed: Boolean
+)
+
+data class AddGroceryRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val completed: Boolean = false
+)
+
+data class DeleteGroceryRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val completed: Boolean
 )
