@@ -25,6 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,6 +37,11 @@ import com.cs407.hive.R
 
 @Composable
 fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -47,38 +55,12 @@ fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Info icon (top left) (I don't think we need one for this screen-Kavya)
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                verticalAlignment = Alignment.CenterVertically,
-//                horizontalArrangement = Arrangement.Start
-//            ) {
-//                var showInfo by remember { mutableStateOf(false) }
-//
-//                Button(
-//                    onClick = { showInfo = !showInfo },
-//                    shape = CircleShape,
-//                    contentPadding = PaddingValues(0.dp),
-//                    colors = ButtonDefaults.buttonColors(
-//                        containerColor = MaterialTheme.colorScheme.onPrimary
-//                    ),
-//                    modifier = Modifier
-//                        .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
-//                        .size(40.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Filled.Info,
-//                        contentDescription = "Info",
-//                        tint = MaterialTheme.colorScheme.onSecondary
-//                    )
-//                }
-//            }
-
             Spacer(modifier = Modifier.height(48.dp))
 
             // Header
             Text(
                 text = "LEADERBOARD\n",
+                fontFamily = CooperBt, //font added
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondary
@@ -186,6 +168,11 @@ fun LBCard(
     status: String,
     modifier: Modifier = Modifier
 ) {
+    //font
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
+
     val img = getBeeProfileImage(rank)
     Box(
         modifier = modifier
@@ -223,12 +210,15 @@ fun LBCard(
                     Text(
                         text = username,
                         color = MaterialTheme.colorScheme.onSecondary,
+                        fontFamily = CooperBt,//font added
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = rank.uppercase(),
                         color = MaterialTheme.colorScheme.onSecondary,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
                         fontSize = 14.sp
                     )
                 }
@@ -237,6 +227,7 @@ fun LBCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = points,
+                    fontFamily = CooperBt, //font added
                     color = MaterialTheme.colorScheme.onSecondary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
@@ -244,6 +235,8 @@ fun LBCard(
                 Text(
                     text = status,
                     color = MaterialTheme.colorScheme.onSecondary,
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic,
                     fontSize = 14.sp
                 )
             }
