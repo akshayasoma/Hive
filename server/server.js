@@ -309,6 +309,46 @@ app.post("/api/group/addChore", async (req, res) => {
     }
 });
 
+app.post("/api/group/deleteChore", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description, points } = req.body;
+    // Makes sure we have valid input parameters
+    if (!groupId || !deviceId || !choreName || points === undefined) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+    // Make sure the group exists and that the requester actually belongs to the group
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Attempt to remove the chore
+    const before = group.chores.length;
+    group.chores = group.chores.filter(chore =>
+      !(
+        chore.name === choreName &&
+        chore.description === (description ?? "") &&
+        chore.points === points
+      )
+    );
+
+    // If the removal failed (because it couldn't find and remove the chore), it errors
+    if (group.chores.length === before) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    // Save the new group without the chore
+    await group.save();
+    res.json({ message: "Chore deleted", chores: group.chores });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 app.post("/api/group/updateName", async (req, res) => {
     try {
         console.log("Changing Group Name!")

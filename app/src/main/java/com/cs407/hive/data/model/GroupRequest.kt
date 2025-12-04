@@ -49,6 +49,14 @@ data class AddChoreRequest(
     val points: Int
 )
 
+data class DeleteChoreRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int
+)
+
 data class DeleteGroupRequest(
     val groupId: String,
     val deviceId: String
