@@ -63,7 +63,11 @@ const userSchema = new mongoose.Schema({
   profilePic: {
                type: String,
                default: ""
-             }
+             },
+ choreRegister: {
+     type: Array,
+     default: []
+   }
 });
 
 const User = mongoose.model("User", userSchema);
@@ -368,6 +372,69 @@ app.post("/api/group/addChore", async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.post("/api/user/completeChore", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description, points } = req.body;
+
+    // Make sure we have all the relevant parameters
+    if (!groupId || !deviceId || !choreName)
+      return res.status(400).json({ error: "Missing required fields" });
+
+    // Find the group to complete the chore from
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Make sure the user belongs to the group
+    if (!group.peopleList.includes(deviceId))
+      return res.status(403).json({ error: "Not authorized" });
+
+    // Find chore in the list
+    const chore = group.chores.find(c =>
+      c.name === choreName &&
+      c.description === (description ?? "") &&
+      c.points === points
+    );
+
+    // If the chore is not found, error
+    if (!chore)
+      return res.status(404).json({ error: "Chore not found" });
+
+    // Update chore status (set to done = 2)
+    chore.status = 2;
+    chore.assignee = deviceId;
+    // Save the chore being complete
+    await group.save();
+
+    // Find the user who completed this
+    const user = await User.findOne({ userId: deviceId });
+
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+    // Add the chore to the users completion list
+    const epoch = Math.floor(Date.now() / 1000);
+
+    user.choreRegister.push({
+      name: choreName,
+      description: description ?? "",
+      points,
+      completedAt: epoch
+    });
+    // Award the total points
+    user.points += points;
+    await user.save();
+
+    return res.json({
+      message: "Chore completed!",
+      userPoints: user.points,
+      choreRegister: user.choreRegister
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/api/group/deleteChore", async (req, res) => {

@@ -3,6 +3,7 @@ package com.cs407.hive.data.network
 import com.cs407.hive.data.model.AddChoreRequest
 import com.cs407.hive.data.model.AddGroceryRequest
 import com.cs407.hive.data.model.CheckLoginResponse
+import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.DeleteGroceryRequest
 import com.cs407.hive.data.model.GroupRequest
@@ -36,6 +37,9 @@ interface HiveApi {
 
     @POST("/api/group/addChore")
     suspend fun addChore(@Body body: AddChoreRequest)
+
+    @POST("/api/user/completeChore")
+    suspend fun completeChore(@Body req: CompleteChoreRequest): UserResponse
 
     @POST("/api/group/deleteChore")
     suspend fun deleteChore(@Body req: DeleteChoreRequest)

@@ -17,12 +17,28 @@ data class UserResponse(
     val user: UserDetail
 )
 
+data class CompletedChore(
+    val name: String,
+    val description: String,
+    val points: Int,
+    val completedAt: Long
+)
+
+data class CompleteChoreRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int
+)
+
 data class UserDetail(
     val userId: String,
     val name: String,
     val preferences: Map<String, Any>?,
     val points: Int,
-    val profilePic: String
+    val profilePic: String,
+    val choreRegister: List<CompletedChore>,
 )
 
 data class GroupResponse(
