@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -94,5 +95,14 @@ dependencies {
 
     //Lottie Animation
     implementation("com.airbnb.android:lottie-compose:6.5.2")
+
+    // Room (local cache)
+    val roomVersion = "2.8.4"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
+
+    // WorkManager for background sync
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
 }

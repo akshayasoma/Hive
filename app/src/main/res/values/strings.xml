@@ -9,5 +9,10 @@
     <string name="save">Save</string>
     <string name="logo">LOGO</string>
     <string name="chore_list">Chores</string>
-
+    <string name="chore_channel_name">Chore Updates</string>
+    <string name="chore_channel_desc">Notifications when new chores are added</string>
+    <string name="chore_new_title">New chore added</string>
+    <string name="chore_new_body">New chore added: %1$s</string>
+    <string name="chore_sync_title">Chores Synced</string>
+    <string name="chore_sync_body">Chores have been synced: %1$s</string>
 </resources>

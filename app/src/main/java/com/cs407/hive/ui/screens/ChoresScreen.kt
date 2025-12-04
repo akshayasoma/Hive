@@ -47,35 +47,34 @@ import androidx.compose.ui.unit.sp
 import com.cs407.hive.data.model.AddChoreRequest
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.data.network.HiveApi
+import com.cs407.hive.data.repository.ChoreRepository
 import com.cs407.hive.ui.theme.HiveTheme
+import com.cs407.hive.ui.viewmodel.ChoresViewModel
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.cs407.hive.data.local.chore.ChoreEntity
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit) {
+fun ChoresScreen(deviceId: String, groupId: String, choreRepository: ChoreRepository, onNavigateToHome: () -> Unit) {
+    val viewModel: ChoresViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = ChoresViewModel(choreRepository, groupId, deviceId) as T
+    })
+    val chores by viewModel.chores.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var choreName by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) }
     var showInfo by remember { mutableStateOf(false) }
 
 
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                val response = api.getGroup(mapOf("groupId" to groupId))
-                val serverChores = response.group.chores ?: emptyList()
-
-                chores = serverChores.map { chore ->
-                    Triple(chore.name, chore.points.toString(), chore.description)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+    LaunchedEffect(groupId) {
+        viewModel.refresh()
     }
 
     Box(
@@ -135,14 +134,13 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
                 if (chores.isNotEmpty()) {
-                    items(chores.reversed()) { (name, pts, desc) ->
-                        Log.d("ChoresScreen", "Chore: $name, Points: $pts, Description: $desc")
+                    items(chores.reversed()) { chore ->
                         ChoreCard(
                             username = "Unassigned",
-                            chore = name,
-                            points = "$pts pts",
+                            chore = chore.name,
+                            points = "${chore.points} pts",
                             status = "To do",
-                            description = desc
+                            description = chore.description
                         )
                     }
                 } else {
@@ -287,41 +285,12 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         if (choreName.isNotBlank() && points.isNotBlank()) {
                             val formattedName = choreName.split(" ")
                                 .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                            Log.d("ChoresScreen", "Chore added: $formattedName, $points, $description")
-                            val request = AddChoreRequest(
-                                groupId = groupId,
-                                deviceId = deviceId,
-                                name = formattedName,
-                                description = description,
-                                points = points.toInt()
-
-                            )
-
-                            scope.launch {
-                                try{
-                                    api.addChore(request)
-                                    Log.d("ChoresScreen", "Chore added: $formattedName, $points, $description")
-
-//                                    chores = chores + Triple(formattedName, points, description)
-                                    val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
-                                    val updatedChores = updatedResponse.group.chores ?: emptyList()
-                                    chores = updatedChores.map { Triple(it.name, it.points.toString(), it.description) }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-
-                                }
-                                finally{
-                                    choreName = ""
-                                    points = ""
-                                    description = ""
-                                }
-                            }
-
+                            viewModel.addChore(formattedName, description, points.toInt())
+                            choreName = ""
+                            points = ""
+                            description = ""
+                            showDialog = false
                         }
-
-
-
-                        showDialog = false
                     }, colors = ButtonDefaults.textButtonColors(
                         containerColor = buttonColor,
                         contentColor = textColor
@@ -587,21 +556,5 @@ fun ChoreCard(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
-@Composable
-fun ChoresPreviewLight() {
-    HiveTheme(dynamicColor = false) {
-        ChoresScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
-@Composable
-fun ChoresPreviewDark() {
-    HiveTheme(dynamicColor = false) {
-        ChoresScreen(deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
     }
 }

@@ -33,19 +33,43 @@ import com.cs407.hive.ui.screens.SettingsScreen
 import com.cs407.hive.ui.theme.HiveTheme
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cs407.hive.data.repository.ChoreRepository
+import com.cs407.hive.notifications.NotificationPermissionHelper
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.cs407.hive.work.ChoreSyncWorker
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        NotificationPermissionHelper.requestIfNeeded(this)
         enableEdgeToEdge()
 
         val context = this
+        val workManager = WorkManager.getInstance(applicationContext)
         val deviceId = Settings.Secure.getString(
             contentResolver,
             Settings.Secure.ANDROID_ID
         )
 
         setContent {
+            val scheduleSync = remember(workManager) {
+                { group: String ->
+                    val request = PeriodicWorkRequestBuilder<ChoreSyncWorker>(15, TimeUnit.MINUTES)
+                        .setInputData(workDataOf(ChoreSyncWorker.KEY_GROUP_ID to group))
+                        .build()
+                    workManager.enqueueUniquePeriodicWork(
+                        "chore-sync-$group",
+                        ExistingPeriodicWorkPolicy.UPDATE,
+                        request
+                    )
+                    Unit
+                }
+            }
+            val app = application as HiveApp
             //This is not persistent...need to make the user light/dark mode preferences persistent
             val systemDarkTheme = isSystemInDarkTheme()
 
@@ -58,14 +82,15 @@ class MainActivity : ComponentActivity() {
             }
 
             HiveTheme(darkTheme = isDarkTheme) {
-//                AppNavigation(deviceId=deviceId, isDarkTheme = isDarkTheme, onDarkModeChange = { isDarkTheme = it }, initialGroupId = null )
                 if (storedGroupId != null) {
                     // Auto-login, skip login screen
                     AppNavigation(
                         deviceId = deviceId,
                         initialGroupId = storedGroupId,
                         isDarkTheme = isDarkTheme,
-                        onDarkModeChange = { isDarkTheme = it }
+                        onDarkModeChange = { isDarkTheme = it },
+                        choreRepository = app.choreRepository,
+                        onGroupAvailable = scheduleSync
                     )
                 } else {
                     // Normal login flow
@@ -73,7 +98,9 @@ class MainActivity : ComponentActivity() {
                         deviceId = deviceId,
                         initialGroupId = null,
                         isDarkTheme = isDarkTheme,
-                        onDarkModeChange = { isDarkTheme = it }
+                        onDarkModeChange = { isDarkTheme = it },
+                        choreRepository = app.choreRepository,
+                        onGroupAvailable = scheduleSync
                     )
                 }
             }
@@ -87,7 +114,9 @@ fun AppNavigation(
     deviceId: String,
     initialGroupId: String?,
     isDarkTheme: Boolean,
-    onDarkModeChange: (Boolean) -> Unit
+    onDarkModeChange: (Boolean) -> Unit,
+    choreRepository: ChoreRepository,
+    onGroupAvailable: (String) -> Unit
 ) {
     // Creates and remembers a NavController to manage navigation state
     val navController = rememberNavController()
@@ -143,6 +172,7 @@ fun AppNavigation(
             ChoresScreen(
                 deviceId = deviceId,
                 groupId = groupId!!,
+                choreRepository = choreRepository,
                 onNavigateToHome = { navController.navigate("home")}
             )
         }
