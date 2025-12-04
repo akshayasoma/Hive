@@ -29,10 +29,14 @@ class ChoreCheckWorker(
         const val TAG = "ChoreCheckWorker"
         const val KEY_GROUP_ID = "group_id"
         const val KEY_DEVICE_ID = "device_id"
-        const val CHANNEL_ID = "chore_updates"
-        const val NOTIFICATION_ID = 1001
-        private const val PREFS_NAME = "chore_check_prefs"
+        const val CHANNEL_ID = "hive_updates"
+        const val NOTIFICATION_ID_CHORES = 1001
+        const val NOTIFICATION_ID_GROCERIES = 1002
+        const val NOTIFICATION_ID_GROUP_NAME = 1003
+        private const val PREFS_NAME = "hive_check_prefs"
         private const val KEY_LAST_CHORE_COUNT = "last_chore_count"
+        private const val KEY_LAST_GROCERY_COUNT = "last_grocery_count"
+        private const val KEY_LAST_GROUP_NAME = "last_group_name"
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -45,38 +49,65 @@ class ChoreCheckWorker(
                 return@withContext Result.success()
             }
 
-            Log.d(TAG, "Checking for new chores for group: $groupId")
+            Log.d(TAG, "Checking for updates for group: $groupId")
 
-            // Fetch latest chore data from the server
+            // Fetch latest data from the server
             val api = ApiClient.instance
             val response = api.getGroup(mapOf("groupId" to groupId))
-            val currentChores = response.group.chores ?: emptyList()
-            val currentChoreCount = currentChores.size
+            val groupData = response.group
 
-            // Get the last known chore count
+            val currentChores = groupData.chores ?: emptyList()
+            val currentGroceries = groupData.groceries ?: emptyList()
+            val currentGroupName = groupData.groupName
+
+            val currentChoreCount = currentChores.size
+            val currentGroceryCount = currentGroceries.size
+
+            // Get the last known values
             val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val lastChoreCount = prefs.getInt(KEY_LAST_CHORE_COUNT, -1)
+            val lastGroceryCount = prefs.getInt(KEY_LAST_GROCERY_COUNT, -1)
+            val lastGroupName = prefs.getString(KEY_LAST_GROUP_NAME, null)
 
-            Log.d(TAG, "Current chore count: $currentChoreCount, Last chore count: $lastChoreCount")
+            Log.d(TAG, "Chores: $currentChoreCount (was $lastChoreCount)")
+            Log.d(TAG, "Groceries: $currentGroceryCount (was $lastGroceryCount)")
+            Log.d(TAG, "Group name: $currentGroupName (was $lastGroupName)")
 
-            // Check if there are new chores
+            // Check for new chores
             if (lastChoreCount != -1 && currentChoreCount > lastChoreCount) {
                 val newChoresCount = currentChoreCount - lastChoreCount
                 Log.d(TAG, "Found $newChoresCount new chore(s)")
-                sendNotification(newChoresCount)
+                sendChoreNotification(newChoresCount)
             }
 
-            // Update the last known chore count
-            prefs.edit().putInt(KEY_LAST_CHORE_COUNT, currentChoreCount).apply()
+            // Check for new groceries
+            if (lastGroceryCount != -1 && currentGroceryCount > lastGroceryCount) {
+                val newGroceriesCount = currentGroceryCount - lastGroceryCount
+                Log.d(TAG, "Found $newGroceriesCount new grocery item(s)")
+                sendGroceryNotification(newGroceriesCount)
+            }
+
+            // Check for group name change
+            if (lastGroupName != null && lastGroupName != currentGroupName) {
+                Log.d(TAG, "Group name changed from '$lastGroupName' to '$currentGroupName'")
+                sendGroupNameNotification(currentGroupName)
+            }
+
+            // Update the last known values
+            prefs.edit()
+                .putInt(KEY_LAST_CHORE_COUNT, currentChoreCount)
+                .putInt(KEY_LAST_GROCERY_COUNT, currentGroceryCount)
+                .putString(KEY_LAST_GROUP_NAME, currentGroupName)
+                .apply()
 
             Result.success()
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking for new chores", e)
+            Log.e(TAG, "Error checking for updates", e)
             Result.retry()
         }
     }
 
-    private fun sendNotification(newChoresCount: Int) {
+    private fun sendChoreNotification(newChoresCount: Int) {
         createNotificationChannel()
 
         // Create intent to open the app
@@ -97,14 +128,76 @@ class ChoreCheckWorker(
         }
 
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_app) // Using the app icon
-            .setContentTitle("New Things to Do! 🐝")
+            .setSmallIcon(R.mipmap.ic_app)
+            .setContentTitle("New Chores! 🐝")
             .setContentText(notificationText)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
 
+        sendNotificationIfPermitted(NOTIFICATION_ID_CHORES, notification, notificationText)
+    }
+
+    private fun sendGroceryNotification(newGroceriesCount: Int) {
+        createNotificationChannel()
+
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            1,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notificationText = if (newGroceriesCount == 1) {
+            "1 new item added to grocery list!"
+        } else {
+            "$newGroceriesCount new items added to grocery list!"
+        }
+
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_app)
+            .setContentTitle("New Groceries! 🛒")
+            .setContentText(notificationText)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        sendNotificationIfPermitted(NOTIFICATION_ID_GROCERIES, notification, notificationText)
+    }
+
+    private fun sendGroupNameNotification(newGroupName: String) {
+        createNotificationChannel()
+
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            2,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notificationText = "Your group is now called \"$newGroupName\""
+
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_app)
+            .setContentTitle("Group Name Changed! 📝")
+            .setContentText(notificationText)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        sendNotificationIfPermitted(NOTIFICATION_ID_GROUP_NAME, notification, notificationText)
+    }
+
+    private fun sendNotificationIfPermitted(notificationId: Int, notification: android.app.Notification, logMessage: String) {
         // Check for notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(
@@ -117,14 +210,14 @@ class ChoreCheckWorker(
             }
         }
 
-        NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, notification)
-        Log.d(TAG, "Notification sent: $notificationText")
+        NotificationManagerCompat.from(applicationContext).notify(notificationId, notification)
+        Log.d(TAG, "Notification sent: $logMessage")
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Chore Updates"
-            val descriptionText = "Notifications for new chores added to your group"
+            val name = "Hive Updates"
+            val descriptionText = "Notifications for chores, groceries, and group changes"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText

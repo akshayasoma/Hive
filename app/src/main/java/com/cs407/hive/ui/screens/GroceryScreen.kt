@@ -69,6 +69,7 @@ import com.cs407.hive.data.model.UiChore
 import com.cs407.hive.data.model.UiGrocery
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.ui.theme.HiveTheme
+import com.cs407.hive.workers.WorkerTestUtils
 import kotlinx.coroutines.launch
 import kotlin.collections.plus
 import kotlin.math.roundToInt
@@ -601,6 +602,23 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                             fontFamily = CooperBt, //font added
                             fontSize = 16.sp
                         )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Test button for worker (development only)
+                        Button(
+                            onClick = {
+                                WorkerTestUtils.runChoreCheckNow(context, groupId, deviceId)
+                                toastMessage = "Testing worker - check for notification!"
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.3f),
+                                contentColor = MaterialTheme.colorScheme.onSecondary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Test Notifications", fontFamily = CooperBt, fontSize = 12.sp)
+                        }
                     }
                 }
             }

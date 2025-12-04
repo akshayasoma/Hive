@@ -68,13 +68,17 @@ object WorkerTestUtils {
     }
 
     /**
-     * Resets the stored chore count to force a notification on next run.
+     * Resets the stored chore count, grocery count, and group name to force notifications on next run.
      * Useful for testing notifications.
      */
     fun resetChoreCount(context: Context) {
-        val prefs = context.getSharedPreferences("chore_check_prefs", Context.MODE_PRIVATE)
-        prefs.edit().remove("last_chore_count").apply()
-        Log.d(TAG, "Chore count reset - next run will initialize count")
+        val prefs = context.getSharedPreferences("hive_check_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .remove("last_chore_count")
+            .remove("last_grocery_count")
+            .remove("last_group_name")
+            .apply()
+        Log.d(TAG, "All tracking data reset - next run will initialize counts and name")
     }
 }
 
