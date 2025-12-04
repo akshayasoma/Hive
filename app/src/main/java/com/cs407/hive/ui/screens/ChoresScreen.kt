@@ -4,6 +4,11 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +16,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,22 +39,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cs407.hive.R
 import com.cs407.hive.data.model.AddChoreRequest
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.data.network.HiveApi
 import com.cs407.hive.ui.theme.HiveTheme
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit) {
@@ -58,6 +72,10 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
     var description by remember { mutableStateOf("") }
     var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) }
     var showInfo by remember { mutableStateOf(false) }
+    var deleteMode by remember { mutableStateOf(false) }
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
 
 
     val api = remember { ApiClient.instance }
@@ -121,6 +139,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
             // Header
             Text(
                 text = "CHORES",
+                fontFamily = CooperBt, //font added
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondary
@@ -142,7 +161,11 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                             chore = name,
                             points = "$pts pts",
                             status = "To do",
-                            description = desc
+                            description = desc,
+                            deleteMode = deleteMode,
+                            onDelete = {
+                                //TODO: Delete the Chore in db
+                            }
                         )
                     }
                 } else {
@@ -150,6 +173,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         Text(
                             text = "No chores yet! Add chores using the button below!",
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                            fontFamily = CooperBt, //font added
                             fontSize = 16.sp,
                             modifier = Modifier.padding(32.dp)
                         )
@@ -172,7 +196,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = { /* TODO: enable delete mode */ },
+                    onClick = { deleteMode = !deleteMode },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -238,6 +262,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 title = {
                     Text(
                         "Add a New Chore",
+                        fontFamily = CooperBt, //font added
                         color = MaterialTheme.colorScheme.onSecondary
                     )
                 },
@@ -247,7 +272,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = choreName,
                             onValueChange = { choreName = it },
-                            label = { Text("Chore Name", color = textColor) },
+                            label = { Text("Chore Name", fontFamily = CooperBt, color = textColor) }, //font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -255,7 +280,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = points,
                             onValueChange = { points = it },
-                            label = { Text("Points", color = textColor) },
+                            label = { Text("Points", fontFamily = CooperBt, color = textColor) }, //font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -263,7 +288,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         OutlinedTextField(
                             value = description,
                             onValueChange = { description = it },
-                            label = { Text("Description", color = textColor) },
+                            label = { Text("Description", fontFamily = CooperBt, color = textColor) }, //font added
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -327,7 +352,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         contentColor = textColor
                     )
                     ) {
-                        Text("Add")
+                        Text("Add", fontFamily = CooperBt,) //font added
                     }
                 },
                 dismissButton = {
@@ -353,7 +378,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         contentColor = textColor
                         )
                     ) {
-                        Text("Cancel")
+                        Text("Cancel", fontFamily = CooperBt,) //font added
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.onPrimary,
@@ -461,6 +486,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                     ) {
                         Text(
                             text = "HOW TO USE",
+                            fontFamily = CooperBt, //font added
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondary
@@ -472,6 +498,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                             text = infoText,
                             inlineContent = inlineContent,
                             color = MaterialTheme.colorScheme.onSecondary,
+                            fontFamily = CooperBt, //font added
                             fontSize = 16.sp
                         )
                     }
@@ -489,17 +516,130 @@ fun ChoreCard(
     points: String,
     status: String,
     description: String,
+    deleteMode: Boolean,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    //Shaking Animation Variables
+    val rotation = remember { Animatable(0f) }
+    var shaking by remember { mutableStateOf(false) }
+
+    // swipe animation
+    val swipeOffset = remember { Animatable(0f) }
+    val cardAlpha = remember { Animatable(1f) }
+    val maxDragX = 150.dp
+
+    //colors for interpolation
+    val defaultCardColor = MaterialTheme.colorScheme.onPrimary
+    val deleteColor = MaterialTheme.colorScheme.error
+    val density = LocalDensity.current
+
+    val CooperBt = FontFamily(
+        Font(R.font.cooper_bt_bold)
+    )
+
+    // Control shaking effect
+    LaunchedEffect(deleteMode) {
+        if (deleteMode) {
+            shaking = true
+            //nfinite rotation between 0 and 1
+            rotation.animateTo(
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 150, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse // from 0 to 1, then 1 back to 0
+                )
+            )
+        } else {
+            shaking = false
+            rotation.stop()
+            rotation.snapTo(0f)
+            swipeOffset.snapTo(0f)
+            cardAlpha.snapTo(1f)
+        }
+    }
+
+    val swipeToDeleteModifier = Modifier.pointerInput(Unit) {
+        val maxDragXPx = maxDragX.toPx()
+
+        detectHorizontalDragGestures(
+            onDragEnd = {
+                if (swipeOffset.value < -maxDragXPx / 2) {
+                    //deletion animation
+                    scope.launch {
+                        swipeOffset.animateTo(-size.width.toFloat(), tween(300))
+                        cardAlpha.animateTo(0f, tween(100))
+                        onDelete() // DELETE FROM DB CALLED HERE
+                    }
+                } else {
+                    scope.launch {
+                        swipeOffset.animateTo(0f, tween(200))
+                    }
+                }
+            },
+            onDragCancel = {
+                scope.launch {
+                    swipeOffset.animateTo(0f, tween(200))
+                }
+            }
+        ) { change, dragAmount ->
+            change.consume()
+            if (deleteMode) {
+                scope.launch {
+                    //right-to-left
+                    val newOffset = (swipeOffset.value + dragAmount).coerceAtMost(0f)
+                    swipeOffset.snapTo(newOffset)
+                }
+            }
+        }
+    }
+
+    //progress of the color change (0.0 to 1.0)
+    val swipeProgress = (-swipeOffset.value / with(density) { maxDragX.toPx()}).coerceIn(0f, 1f)
+
+    //interpolated color based on swipe progress
+    val interpolatedColor = lerp(defaultCardColor, deleteColor, swipeProgress)
+
+    val cardGraphicsModifier = modifier
+        .fillMaxWidth(0.9f)
+        .then(if (deleteMode) swipeToDeleteModifier else Modifier)
+        .graphicsLayer(
+            //rotation for shaking
+            rotationZ = if (shaking && deleteMode) (rotation.value * 2f) - 1f else 0f,
+            //swipe offset when dragging
+            translationX = swipeOffset.value,
+            //fade-out effect deletion
+            alpha = cardAlpha.value
+        )
+        // horizontal offset for shaking
+        .offset {
+            with(density) {
+                if (shaking && deleteMode) {
+                    IntOffset(
+                        x = (rotation.value * 2.dp.toPx()).roundToInt() - 1.dp.toPx().roundToInt(),
+                        y = 0
+                    )
+                } else {
+                    IntOffset.Zero
+                }
+            }
+        }
+        .clickable(enabled = !deleteMode) { isExpanded = !isExpanded }
+
+    val contentTint = lerp(MaterialTheme.colorScheme.onSecondary, MaterialTheme.colorScheme.onError, swipeProgress)
 
     Card(
-        modifier = modifier
-            .fillMaxWidth(0.9f)
-            .clickable { isExpanded = !isExpanded },
+        modifier = cardGraphicsModifier,
+//        modifier = modifier
+//            .fillMaxWidth(0.9f)
+//            .clickable { isExpanded = !isExpanded },
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onPrimary
+            //containerColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = interpolatedColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -516,7 +656,7 @@ fun ChoreCard(
                     // Profile icon
                     Box(
                         modifier = Modifier
-                            .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
+                            .border(2.dp, contentTint, CircleShape)
                             .size(60.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.onPrimary),
@@ -524,7 +664,8 @@ fun ChoreCard(
                     ) {
                         Text(
                             text = "🐝",
-                            color = MaterialTheme.colorScheme.onSecondary,
+                            color = contentTint,
+                            fontFamily = CooperBt, //font added
                             fontSize = 26.sp
                         )
                     }
@@ -534,13 +675,15 @@ fun ChoreCard(
                     Column {
                         Text(
                             text = chore.uppercase(),
-                            color = MaterialTheme.colorScheme.onSecondary,
+                            color = contentTint,
+                            fontFamily = CooperBt, //font added
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = username,
-                            color = MaterialTheme.colorScheme.onSecondary,
+                            color = contentTint,
+                            fontFamily = CooperBt, //font added
                             fontSize = 14.sp
                         )
                     }
@@ -549,13 +692,15 @@ fun ChoreCard(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = points,
-                        color = MaterialTheme.colorScheme.onSecondary,
+                        color = contentTint,
+                        fontFamily = CooperBt, //font added
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = status,
-                        color = MaterialTheme.colorScheme.onSecondary,
+                        color = contentTint,
+                        fontFamily = CooperBt, //font added
                         fontSize = 14.sp
                     )
                 }
@@ -575,12 +720,14 @@ fun ChoreCard(
                     Text(
                         text = "Description:",
                         color = MaterialTheme.colorScheme.onSecondary,
+                        fontFamily = CooperBt, //font added
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = description,
                         color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
+                        fontFamily = CooperBt, //font added
                         fontSize = 14.sp,
                         modifier = Modifier.padding(top = 4.dp)
                     )

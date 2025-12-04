@@ -20,7 +20,6 @@ import androidx.navigation.compose.rememberNavController
 import com.cs407.hive.ui.screens.CameraScreen
 import com.cs407.hive.data.local.loadGroupId
 import com.cs407.hive.data.local.saveGroupId
-import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.ui.screens.ChoresScreen
 import com.cs407.hive.ui.screens.CreateScreen
 import com.cs407.hive.ui.screens.GroceryScreen
@@ -29,9 +28,11 @@ import com.cs407.hive.ui.screens.JoinScreen
 import com.cs407.hive.ui.screens.LeaderboardScreen
 import com.cs407.hive.ui.screens.LogInScreen
 import com.cs407.hive.ui.screens.RecipeScreen
+import com.cs407.hive.ui.screens.RecipeViewModel
 import com.cs407.hive.ui.screens.SettingsScreen
 import com.cs407.hive.ui.theme.HiveTheme
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +94,7 @@ fun AppNavigation(
     var groupId by remember { mutableStateOf(initialGroupId) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val recipeViewModel: RecipeViewModel = viewModel()
 
     // NavHost sets up the navigation graph for the app
     NavHost(
@@ -161,14 +163,16 @@ fun AppNavigation(
         composable("recipe"){
             RecipeScreen(
                 onNavigateToHome = { navController.navigate("home")},
-                onNavigateToCamera = { navController.navigate("camera")}
+                onNavigateToCamera = { navController.navigate("camera") },
+                viewModel = recipeViewModel
 
             )
         }
 
         composable("camera") {
             CameraScreen(
-                onNavigateToRecipe = { navController.navigate("recipe")}
+                onNavigateToRecipe = { navController.navigate("recipe") },
+                recipeViewModel = recipeViewModel
             )
         }
 

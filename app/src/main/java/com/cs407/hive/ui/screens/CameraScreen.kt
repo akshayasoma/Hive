@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Close
@@ -34,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,11 +55,13 @@ import com.cs407.hive.ui.screens.camera.CameraViewModel
 import java.io.File
 
 @Composable
-fun CameraScreen(onNavigateToRecipe: () -> Unit) {
+fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewModel) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewModel: CameraViewModel = viewModel()
-    val prompt = "What do you see? First rate the content out of 10. Then, give a simple title to the image. Finally, talk about the image in detail, describing any objects, people, scenery, and notable features present. Separate each section using a ; and do not include headers. Also do not use the ; anywhere else. For example: '8;Sunset over mountains;The image shows a beautiful sunset over a range of mountains with vibrant colors in the sky...'"
+    val prompt = """
+        Identify every distinct edible ingredient visible in this photo. Respond using JSON in the form {\"ingredients\": [\"ingredient one\", \"ingredient two\"]}. Only include common grocery terms (no descriptions, quantities, or dishes). If unsure, return an empty list. Trim duplicates.
+    """.trimIndent()
     var hasCameraPermission by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -111,7 +113,9 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit) {
             )
         } else {
             Column(
-                modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Camera permission is required to use this feature.")
@@ -174,7 +178,10 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit) {
                     properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator()
@@ -184,23 +191,68 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit) {
                 }
             }
             is CameraUiState.Success -> {
+                val detected = s.ingredients
+                val hasIngredients = detected.isNotEmpty()
                 androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.reset() }) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Perplexity says:", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = if (hasIngredients) "Ingredients detected" else "No ingredients found",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         Spacer(Modifier.height(8.dp))
-                        Text(s.response)
+                        if (hasIngredients) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                detected.forEach { ingredient ->
+                                    Text(
+                                        "- $ingredient",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                "Try retaking the photo with clearer lighting.",
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(Modifier.height(16.dp))
-                        Button(onClick = { viewModel.reset() }) { Text("Close") }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                modifier = Modifier.weight(1f),
+                                onClick = { viewModel.reset() },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                            ) { Text("Cancel") }
+                            Button(
+                                modifier = Modifier.weight(1f),
+                                enabled = hasIngredients,
+                                onClick = {
+                                    if (hasIngredients) {
+                                        recipeViewModel.addIngredients(detected)
+                                    }
+                                    viewModel.reset()
+                                    onNavigateToRecipe()
+                                }
+                            ) { Text("Confirm") }
+                        }
                     }
                 }
             }
             is CameraUiState.Error -> {
                 androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.reset() }) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("Error:", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
