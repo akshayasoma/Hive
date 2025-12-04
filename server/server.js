@@ -38,7 +38,9 @@ const groupSchema = new mongoose.Schema({
       {
         name: { type: String, required: true },
         description: { type: String, default: "" },
-        points: { type: Number, default: 0 }
+        points: { type: Number, default: 0 },
+        status: { type: Number, default: 0 },
+        assignee: { type: String, default: "" }
       }
     ]
 });
@@ -282,7 +284,7 @@ app.post("/api/group/addGrocery", async (req, res) => {
 
 app.post("/api/group/addChore", async (req, res) => {
     try {
-        const { groupId, deviceId, name, description = "", points = 0 } = req.body;
+        const { groupId, deviceId, name, description = "", points = 0, status = 0, assignee = "" } = req.body;
 
         if (!groupId || !deviceId || !name) {
           return res.status(400).json({ error: "groupId, deviceId, and name are required" });
@@ -299,7 +301,9 @@ app.post("/api/group/addChore", async (req, res) => {
         group.chores.push({
           name,
           description,
-          points
+          points,
+          status,
+          assignee
         });
 
         await group.save();
@@ -311,11 +315,17 @@ app.post("/api/group/addChore", async (req, res) => {
 
 app.post("/api/group/deleteChore", async (req, res) => {
   try {
-    const { groupId, deviceId, choreName, description, points } = req.body;
+    const { groupId, deviceId, choreName, description, points, status, assignee } = req.body;
     // Makes sure we have valid input parameters
     if (!groupId || !deviceId || !choreName || points === undefined) {
       return res.status(400).json({ error: "Missing fields" });
     }
+    // Status can only be 0, 1, or 2. If not, return error
+    if (status < 0 || status > 2 || !Number.isInteger(status)) {
+          return res.status(400).json({ error: "Status not allowed" });
+        }
+
+
     // Make sure the group exists and that the requester actually belongs to the group
     const group = await Group.findOne({ groupId });
     if (!group) return res.status(404).json({ error: "Group not found" });
@@ -330,7 +340,9 @@ app.post("/api/group/deleteChore", async (req, res) => {
       !(
         chore.name === choreName &&
         chore.description === (description ?? "") &&
-        chore.points === points
+        chore.points === points &&
+        chore.status === status &&
+        chore.assignee === assignee
       )
     );
 
