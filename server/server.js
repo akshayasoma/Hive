@@ -56,6 +56,15 @@ const userSchema = new mongoose.Schema({
                    type: Object,
                    default: {}
                  },
+  points: {
+           type: Number,
+           default: 0
+         },
+  profilePicture: {
+                    type: String,
+                    default: ""
+                  }
+
 });
 
 const User = mongoose.model("User", userSchema);
@@ -162,6 +171,8 @@ app.post("/api/groups", async (req, res) => {
       user = new User({
         userId: creatorId,
         name: creatorName,
+        points: 0,
+        profilePicture: ""
       });
 
       await user.save();
@@ -211,6 +222,8 @@ app.post("/api/group/join", async (req, res) => {
       user = new User({
         userId: deviceId,
         name: userName,
+        points: 0,
+        profilePicture: ""
       });
       await user.save();
     }
