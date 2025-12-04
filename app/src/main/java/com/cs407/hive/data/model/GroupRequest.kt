@@ -20,7 +20,9 @@ data class UserResponse(
 data class UserDetail(
     val userId: String,
     val name: String,
-    val preferences: Map<String, Any>?
+    val preferences: Map<String, Any>?,
+    val points: Int,
+    val profilePic: String
 )
 
 data class GroupResponse(
