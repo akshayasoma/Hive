@@ -26,11 +26,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
@@ -40,11 +42,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -52,8 +56,12 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -73,7 +81,7 @@ import kotlin.math.roundToInt
 
 
 @Composable
-fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit) {
+fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,darkModeState: Boolean) {
     var showDialog by remember { mutableStateOf(false) }
     var choreName by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("") }
@@ -85,11 +93,69 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+
+    var choreNameError by remember { mutableStateOf<String?>(null) }
+    var pointsError by remember { mutableStateOf<String?>(null) }
+    var descriptionError by remember { mutableStateOf<String?>(null) }
+
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
+
+    // Keyboard configuration for points field
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Validation functions
+    fun validateChoreName(): Boolean {
+        return if (choreName.isBlank()) {
+            choreNameError = "Chore name cannot be empty!"
+            false
+        } else if (choreName.length > 30) {
+            choreNameError = "Chore name too long!"
+            false
+        } else {
+            choreNameError = null
+            true
+        }
+    }
+
+    fun validatePoints(): Boolean {
+        return if (points.isBlank()) {
+            pointsError = "Points cannot be empty!"
+            false
+        } else if (!points.matches(Regex("^\\d+\$"))) {
+            pointsError = "Only numbers are allowed!"
+            false
+        } else if (points.toIntOrNull() == null) {
+            pointsError = "Invalid number!"
+            false
+        } else if (points.toInt() <= 0) {
+            pointsError = "Points must be greater than 0!"
+            false
+        } else {
+            pointsError = null
+            true
+        }
+    }
+
+    fun validateDescription(): Boolean {
+        return if (description.length > 50) {
+            descriptionError = "Description too long!"
+            false
+        } else {
+            descriptionError = null
+            true
+        }
+    }
+
+    fun validateAll(): Boolean {
+        val nameValid = validateChoreName()
+        val pointsValid = validatePoints()
+        val descValid = validateDescription()
+        return nameValid && pointsValid && descValid
+    }
 
     LaunchedEffect(toastMessage) {
         if (toastMessage != null) {
@@ -119,6 +185,12 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    LaunchedEffect(chores) {
+        if (chores.isEmpty()) {
+            deleteMode = false
         }
     }
 
@@ -264,7 +336,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                                         toastMessage = "Failed to update status: ${e.message}"
                                     }
                                 }
-                            }
+                            },
+                            darkModeState = darkModeState
                         )
                     }
                 } else {
@@ -272,8 +345,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         Text(
                             text = "No chores yet! Add chores using the button below!",
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                            fontFamily = CooperBt, //font added
-                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(32.dp)
                         )
                     }
@@ -333,7 +406,11 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
 
                 // Add Button
                 Button(
-                    onClick = { showDialog = true },
+                    onClick = {
+                        choreNameError = null
+                        pointsError = null
+                        descriptionError = null
+                        showDialog = true },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -351,13 +428,21 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
             }
         }
         if (showDialog) {
-            val textColor = if (isSystemInDarkTheme()) {
+            val textColor = if (darkModeState) {
                 MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSecondary
             }
+            val borderColor = if (darkModeState) {
+                Color.LightGray
+            } else {
+                Color.DarkGray
+            }
             AlertDialog(
-                onDismissRequest = { showDialog = false },
+                onDismissRequest = {
+                    choreNameError = null
+                    descriptionError = null
+                    showDialog = false },
                 title = {
                     Text(
                         "Add a New Chore",
@@ -368,89 +453,217 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
 
                 text = {
                     Column {
+                        // Chore Name Field with Error
+                        val errorColor = if (darkModeState) Color.Red else MaterialTheme.colorScheme.error
+                        if (choreNameError != null) {
+                            Text(
+                                text = choreNameError!!,
+                                color = errorColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
                         OutlinedTextField(
                             value = choreName,
-                            onValueChange = { choreName = it },
-                            label = { Text("Chore Name", fontFamily = CooperBt, color = textColor) }, //font added
+                            onValueChange = { newValue ->
+                                choreName = newValue.take(31)
+                                validateChoreName()
+                                            },
+                            label = { Text("Chore Name",
+                                fontFamily = CooperBt, color = textColor) }, //font added
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = choreNameError != null,
+                            trailingIcon = {
+                                if (choreNameError != null) {
+                                    Icon(
+                                        Icons.Default.Error,
+                                        contentDescription = "Error",
+                                        tint = errorColor
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.DarkGray,
+                                unfocusedBorderColor = Color.DarkGray,
+                                errorBorderColor = Color.Red
+                            ),
                         )
                         Spacer(modifier = Modifier.height(12.dp))
+
+                        // Points Field with Error
+                        if (pointsError != null) {
+                            Text(
+                                text = pointsError!!,
+                                color = errorColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+
                         OutlinedTextField(
                             value = points,
-                            onValueChange = { points = it },
+                            onValueChange = { newValue ->
+                                if (newValue.isEmpty() || newValue.matches(Regex("^\\d+\$"))) {
+                                    points = newValue
+                                }
+                                validatePoints()
+                                            },
                             label = { Text("Points", fontFamily = CooperBt, color = textColor) }, //font added
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = pointsError != null,
+                            trailingIcon = {
+                                if (pointsError != null) {
+                                    Icon(
+                                        Icons.Default.Error,
+                                        contentDescription = "Error",
+                                        tint = errorColor
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.DarkGray,
+                                unfocusedBorderColor = Color.DarkGray,
+                                errorBorderColor = Color.Red
+                            ),
+                            // Set keyboard to number pad
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            )
                         )
                         Spacer(modifier = Modifier.height(12.dp))
+
+                        // Description Field with Error
+                        if (descriptionError != null) {
+                            Text(
+                                text = descriptionError!!,
+                                color = errorColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+
                         OutlinedTextField(
                             value = description,
-                            onValueChange = { description = it },
-                            label = { Text("Description", fontFamily = CooperBt, color = textColor) }, //font added
+                            onValueChange = { newValue ->
+                                description = newValue.take(51)
+                                validateDescription()
+                                            },
+                            label = { Text("Description",
+                                fontFamily = CooperBt, color = textColor) }, //font added
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(100.dp)
+                                .height(100.dp),
+                            isError = descriptionError != null,
+                            trailingIcon = {
+                                if (descriptionError != null) {
+                                    Icon(
+                                        Icons.Default.Error,
+                                        contentDescription = "Error",
+                                        tint = errorColor
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.DarkGray,
+                                unfocusedBorderColor = Color.DarkGray,
+                                errorBorderColor = Color.Red
+                            ),
                         )
                     }
                 },
                 confirmButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondaryContainer
                     } else {
                         MaterialTheme.colorScheme.onTertiary
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
                     }
                     TextButton(onClick = {
-                        if (choreName.isNotBlank() && points.isNotBlank()) {
-                            val formattedName = choreName.split(" ")
-                                .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                            Log.d("ChoresScreen", "Chore added: $formattedName, $points, $description")
-                            val request = AddChoreRequest(
-                                groupId = groupId,
-                                deviceId = deviceId,
-                                name = formattedName,
-                                description = description,
-                                points = points.toInt()
+                        // Clear previous errors first
+                        choreNameError = null
+                        pointsError = null
+                        descriptionError = null
 
-                            )
+                        // Run all validations
+                        val nameValid = validateChoreName()
+                        val pointsValid = validatePoints()
+                        val descValid = validateDescription()
 
-                            scope.launch {
-                                try{
-                                    api.addChore(request)
-                                    Log.d("ChoresScreen", "Chore added: $formattedName, $points, $description")
+                        val allValid = nameValid && pointsValid && descValid
+
+                        if (allValid) {
+                                if (choreName.isNotBlank() && points.isNotBlank()) {
+                                    val formattedName = choreName.split(" ")
+                                        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                                    Log.d(
+                                        "ChoresScreen",
+                                        "Chore added: $formattedName, $points, $description"
+                                    )
+                                    val request = AddChoreRequest(
+                                        groupId = groupId,
+                                        deviceId = deviceId,
+                                        name = formattedName,
+                                        description = description,
+                                        points = points.toInt()
+
+                                    )
+
+                                    scope.launch {
+                                        try {
+                                            api.addChore(request)
+                                            Log.d(
+                                                "ChoresScreen",
+                                                "Chore added: $formattedName, $points, $description"
+                                            )
 
 //                                    chores = chores + Triple(formattedName, points, description)
-                                    val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
-                                    val updatedChores = updatedResponse.group.chores ?: emptyList()
+                                            val updatedResponse =
+                                                api.getGroup(mapOf("groupId" to groupId))
+                                            val updatedChores =
+                                                updatedResponse.group.chores ?: emptyList()
 //                                    chores = updatedChores.map { Triple(it.name, it.points.toString(), it.description) }
-                                    chores = updatedChores.map { UiChore(
-                                        name = it.name,
-                                        description = it.description,
-                                        points = it.points,
-                                        status = it.status,
-                                        assignee = it.assignee
-                                    ) }
-                                    toastMessage = "Chore '$formattedName' created successfully"
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                    toastMessage = "Failed to create chore: ${e.message}"
+                                            chores = updatedChores.map {
+                                                UiChore(
+                                                    name = it.name,
+                                                    description = it.description,
+                                                    points = it.points,
+                                                    status = it.status,
+                                                    assignee = it.assignee
+                                                )
+                                            }
+                                            toastMessage =
+                                                "Chore '$formattedName' created successfully"
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                            toastMessage = "Failed to create chore: ${e.message}"
+                                        } finally {
+                                            choreName = ""
+                                            points = ""
+                                            description = ""
+                                            choreNameError = null
+                                            pointsError = null
+                                            descriptionError = null
+                                        }
+                                    }
+                                    showDialog = false
                                 }
-                                finally{
-                                    choreName = ""
-                                    points = ""
-                                    description = ""
-                                }
-                            }
-
                         }
-                        showDialog = false
+
                     }, colors = ButtonDefaults.textButtonColors(
                         containerColor = buttonColor,
                         contentColor = textColor
@@ -460,13 +673,13 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                     }
                 },
                 dismissButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
                     } else {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -475,6 +688,9 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                         onClick = {
                             choreName = ""
                             points = ""
+                            choreNameError = null
+                            pointsError = null
+                            descriptionError = null
                             showDialog = false
                         },
                         colors = ButtonDefaults.textButtonColors(
@@ -512,7 +728,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit)
                 append(" to enter delete mode")
 
                 // Sub-bullet for delete
-                val subBullet = "◦ Swipe RIGHT on a chore to delete it"
+                val subBullet = "◦ Swipe LEFT on a chore to delete it"
                 addStyle(
                     style = ParagraphStyle(
                         textIndent = TextIndent(firstLine = 24.sp, restLine = 34.sp),
@@ -643,7 +859,8 @@ fun ChoreCard(
     modifier: Modifier = Modifier,
     groupMembers: List<String> = emptyList(),
     onAssignUser: (String) -> Unit = {},
-    onChangeStatus: (String) -> Unit = {}
+    onChangeStatus: (String) -> Unit = {},
+    darkModeState : Boolean
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAssignDialog by remember { mutableStateOf(false) }
@@ -779,7 +996,8 @@ fun ChoreCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)) {
                     // Profile icon
                     Box(
                         modifier = Modifier
@@ -806,6 +1024,8 @@ fun ChoreCard(
                             fontFamily = CooperBt,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
+                            maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                            overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
                             style = androidx.compose.ui.text.TextStyle(
                                 textDecoration = if (isCompleted) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None
                             )
@@ -813,8 +1033,12 @@ fun ChoreCard(
                         Text(
                             text = currentAssignee,
                             color = contentTint,
-                            fontFamily = CooperBt, //font added
-                            fontSize = 14.sp
+                            //fontFamily = CooperBt, //font added
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
+                            maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                            overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -825,7 +1049,8 @@ fun ChoreCard(
                         color = contentTint,
                         fontFamily = CooperBt,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
                     )
                     Text(
                         text = currentStatus,
@@ -835,8 +1060,11 @@ fun ChoreCard(
                             "Completed" -> androidx.compose.ui.graphics.Color(0xFF4CAF50)
                             else -> contentTint
                         },
-                        fontFamily = CooperBt,
-                        fontSize = 14.sp
+                        //fontFamily = CooperBt,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
+                        maxLines = 1,
                     )
                 }
             }
@@ -863,8 +1091,10 @@ fun ChoreCard(
                         Text(
                             text = description,
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
-                            fontFamily = CooperBt,
+                            //fontFamily = CooperBt,
                             fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
                         )
                     }
@@ -896,7 +1126,7 @@ fun ChoreCard(
         }
     }
     if (showAssignDialog) {
-        val textColor = if (isSystemInDarkTheme()) {
+        val textColor = if (darkModeState) {
             MaterialTheme.colorScheme.onTertiary
         } else {
             MaterialTheme.colorScheme.onSecondary
@@ -943,7 +1173,9 @@ fun ChoreCard(
                             Text(
                                 text = "Unassigned",
                                 color = MaterialTheme.colorScheme.onSecondary,
-                                fontFamily = CooperBt,
+                                //fontFamily = CooperBt,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
                                 fontSize = 14.sp
                             )
                         }
@@ -967,7 +1199,9 @@ fun ChoreCard(
                                 Text(
                                     text = member,
                                     color = MaterialTheme.colorScheme.onSecondary,
-                                    fontFamily = CooperBt,
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
                                     fontSize = 14.sp
                                 )
                             }
@@ -1006,7 +1240,9 @@ fun ChoreCard(
                                 Text(
                                     text = statusOption,
                                     color = MaterialTheme.colorScheme.onSecondary,
-                                    fontFamily = CooperBt,
+                                    //fontFamily = CooperBt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
                                     fontSize = 14.sp
                                 )
                             }
@@ -1050,18 +1286,18 @@ fun ChoreCard(
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
-@Composable
-fun ChoresPreviewLight() {
-    HiveTheme(dynamicColor = false) {
-        ChoresScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
+//@Composable
+//fun ChoresPreviewLight() {
+//    HiveTheme(dynamicColor = false) {
+//        ChoresScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
+//    }
+//}
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
-@Composable
-fun ChoresPreviewDark() {
-    HiveTheme(dynamicColor = false) {
-        ChoresScreen(deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
+//@Composable
+//fun ChoresPreviewDark() {
+//    HiveTheme(dynamicColor = false) {
+//        ChoresScreen(deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
+//    }
+//}

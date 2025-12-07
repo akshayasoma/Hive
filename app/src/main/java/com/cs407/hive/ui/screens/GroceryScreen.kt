@@ -32,6 +32,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
@@ -41,6 +42,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -75,7 +77,7 @@ import kotlin.collections.plus
 import kotlin.math.roundToInt
 
 @Composable
-fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Unit) {
+fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Unit, darkModeState : Boolean) {
     var showDialog by remember { mutableStateOf(false) }
     var itemName by remember { mutableStateOf("") }
     var isDone by remember { mutableStateOf(false) }
@@ -92,11 +94,37 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
         Font(R.font.cooper_bt_bold)
     )
 
+    var itemNameError by remember { mutableStateOf<String?>(null) }
+    var descriptionError by remember { mutableStateOf<String?>(null) }
+
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
+
+    fun validateItemName(): Boolean {
+        return if (itemName.isBlank()) {
+            itemNameError = "Item name cannot be empty!"
+            false
+        } else if (itemName.length > 30) {
+            itemNameError = "Item name too long!"
+            false
+        } else {
+            itemNameError = null
+            true
+        }
+    }
+
+    fun validateDescription(): Boolean {
+        return if (description.length > 50) {
+            descriptionError = "Description too long!"
+            false
+        } else {
+            descriptionError = null
+            true
+        }
+    }
 
     LaunchedEffect(toastMessage) {
         if (toastMessage != null) {
@@ -121,6 +149,12 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    LaunchedEffect(groceries) {
+        if (groceries.isEmpty()) {
+            deleteMode = false
         }
     }
 
@@ -224,7 +258,8 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                     }
 
                                 }
-                            }
+                            },
+                            darkModeState = darkModeState
 
                         )
                     }
@@ -268,7 +303,8 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                     }
 
                                 }
-                            }
+                            },
+                            darkModeState = darkModeState
                         )
                     }
                 } else {
@@ -338,7 +374,10 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
 
                 // Add Button
                 Button(
-                    onClick = { showDialog = true},
+                    onClick = {
+                        itemNameError = null
+                        descriptionError = null
+                        showDialog = true},
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -356,7 +395,7 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
             }
         }
         if (showDialog) {
-            val textColor = if (isSystemInDarkTheme()) {
+            val textColor = if (darkModeState) {
                 MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSecondary
@@ -373,9 +412,22 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                 },
                 text = {
                     Column {
+                        if (itemNameError != null) {
+                            Text(
+                                text = itemNameError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+
                         OutlinedTextField(
                             value = itemName,
-                            onValueChange = { itemName = it },
+                            onValueChange = { newValue ->
+                                itemName = newValue.take(31)
+                                validateItemName() },
                             label = {
                                 Text(
                                     text = "Item Name",
@@ -386,12 +438,41 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                 )
                             },//font added
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = itemNameError != null,
+                            trailingIcon = {
+                                if (itemNameError != null) {
+                                    Icon(
+                                        Icons.Default.Error,
+                                        contentDescription = "Error",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.DarkGray,
+                                unfocusedBorderColor = Color.DarkGray,
+                                errorBorderColor = Color.Red
+                            ),
                         )
                         Spacer(modifier = Modifier.height(12.dp))
+
+                        if (descriptionError != null) {
+                            Text(
+                                text = descriptionError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+
                         OutlinedTextField(
                             value = description,
-                            onValueChange = { description = it },
+                            onValueChange = { newValue ->
+                                description = newValue.take(51)
+                                validateDescription() },
                             label = {
                                 Text(
                                     text = "Description",
@@ -404,18 +485,33 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(100.dp)
+                                .height(100.dp),
+                            isError = descriptionError != null,
+                            trailingIcon = {
+                                if (descriptionError != null) {
+                                    Icon(
+                                        Icons.Default.Error,
+                                        contentDescription = "Error",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.DarkGray,
+                                unfocusedBorderColor = Color.DarkGray,
+                                errorBorderColor = Color.Red
+                            ),
                         )
                     }
                 },
                 confirmButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondaryContainer
                     } else {
                         MaterialTheme.colorScheme.onTertiary
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -423,47 +519,64 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
 
                     TextButton(
                         onClick = {
-                            if (itemName.isNotBlank()) {
-                                val formattedName = itemName.split(" ")
-                                    .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                            itemNameError = null // Clear previous errors
+                            descriptionError = null
 
-                                val request = AddGroceryRequest(
-                                    groupId = groupId,
-                                    deviceId = deviceId,
-                                    name = formattedName,
-                                    description = description,
-                                    completed = false
+                            val nameValid = validateItemName() // Run validation
+                            val descValid = validateDescription()
+                            val allValid = nameValid  && descValid
+                            if (allValid) {
+                                if (itemName.isNotBlank()) {
+                                    val formattedName = itemName.split(" ")
+                                        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 
-                                )
+                                    val request = AddGroceryRequest(
+                                        groupId = groupId,
+                                        deviceId = deviceId,
+                                        name = formattedName,
+                                        description = description,
+                                        completed = false
 
-                                scope.launch {
-                                    try{
-                                        api.addGrocery(request)
-                                        Log.d("GroceryScreen", "Grocery added: $formattedName, $description")
+                                    )
+
+                                    scope.launch {
+                                        try {
+                                            api.addGrocery(request)
+                                            Log.d(
+                                                "GroceryScreen",
+                                                "Grocery added: $formattedName, $description"
+                                            )
 
 //                                    chores = chores + Triple(formattedName, points, description)
-                                        val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
-                                        val updatedGroceries = updatedResponse.group.groceries ?: emptyList()
-                                        groceries = updatedGroceries.map { UiGrocery(
-                                            name = it.name,
-                                            description = it.description,
-                                            completed = it.completed
-                                        ) }
-                                        toastMessage = "Grocery '$formattedName' added successfully!"
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                        toastMessage = "Failed to add grocery: ${e.message}"
+                                            val updatedResponse =
+                                                api.getGroup(mapOf("groupId" to groupId))
+                                            val updatedGroceries =
+                                                updatedResponse.group.groceries ?: emptyList()
+                                            groceries = updatedGroceries.map {
+                                                UiGrocery(
+                                                    name = it.name,
+                                                    description = it.description,
+                                                    completed = it.completed
+                                                )
+                                            }
+                                            toastMessage =
+                                                "Grocery '$formattedName' added successfully!"
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                            toastMessage = "Failed to add grocery: ${e.message}"
+                                        } finally {
+                                            itemName = ""
+                                            description = ""
+                                            itemNameError = null
+                                            descriptionError = null
+                                        }
                                     }
-                                    finally{
-                                        itemName = ""
-                                        description = ""
-                                    }
-                                }
 
 //                                groceries = groceries + UiGrocery(name = formattedName, description = description, completed = false)//Triple(formattedName, false, description)
+                                }
+                                showDialog = false
                             }
 
-                            showDialog = false
                         },
                         colors = ButtonDefaults.textButtonColors(
                             containerColor = buttonColor,
@@ -474,13 +587,13 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                     }
                 },
                 dismissButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
                     } else {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -490,6 +603,7 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                         onClick = {
                             itemName = ""
                             description = ""
+                            itemNameError = null
                             showDialog = false
                         },
                         colors = ButtonDefaults.textButtonColors(
@@ -528,7 +642,7 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                 append(" to enter delete mode\n")
 
                 pushStyle(SpanStyle(fontSize = 14.sp))
-                append("      ◦ Swipe RIGHT on an item to delete\n\n")
+                append("      ◦ Swipe LEFT on an item to delete\n\n")
                 pop()
             }
 
@@ -634,6 +748,7 @@ fun GroceryCard(
     description: String,
     deleteMode: Boolean,
     onDelete: () -> Unit,
+    darkModeState : Boolean
 ) {
     var isChecked by remember { mutableStateOf(status) }
     var isExpanded by remember { mutableStateOf(false) }
@@ -830,18 +945,18 @@ fun GroceryCard(
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
-@Composable
-fun GroceryPreviewLight() {
-    HiveTheme(dynamicColor = false) {
-        GroceryScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
+//@Composable
+//fun GroceryPreviewLight() {
+//    HiveTheme(dynamicColor = false) {
+//        GroceryScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
+//    }
+//}
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
-@Composable
-fun GroceryPreviewDark() {
-    HiveTheme(dynamicColor = false) {
-        GroceryScreen (deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
+//@Composable
+//fun GroceryPreviewDark() {
+//    HiveTheme(dynamicColor = false) {
+//        GroceryScreen (deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
+//    }
+//}

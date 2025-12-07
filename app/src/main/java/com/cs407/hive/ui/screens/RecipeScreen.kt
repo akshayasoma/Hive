@@ -77,7 +77,8 @@ data class RecipeNote(
 fun RecipeScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToCamera: () -> Unit = {},
-    viewModel: RecipeViewModel = viewModel()
+    viewModel: RecipeViewModel = viewModel(),
+    darkModeState : Boolean
 ) {
     var showAddIngredientDialog by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
@@ -458,7 +459,7 @@ fun RecipeScreen(
         }
 
         if (showAddIngredientDialog) {
-            val textColor = if (isSystemInDarkTheme()) {
+            val textColor = if (darkModeState) {
                 MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSecondary
@@ -484,13 +485,13 @@ fun RecipeScreen(
                     }
                 },
                 confirmButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondaryContainer
                     } else {
                         MaterialTheme.colorScheme.onTertiary
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -512,13 +513,13 @@ fun RecipeScreen(
                     }
                 },
                 dismissButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
                     } else {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -864,21 +865,21 @@ fun getDifficultyColor(difficulty: String): Color {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
-@Composable
-fun RecipePreviewLight() {
-    HiveTheme(dynamicColor = false) {
-        RecipeScreen(onNavigateToHome = {})
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
-@Composable
-fun RecipePreviewDark() {
-    HiveTheme(dynamicColor = false) {
-        RecipeScreen(onNavigateToHome = {})
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
+//@Composable
+//fun RecipePreviewLight() {
+//    HiveTheme(dynamicColor = false) {
+//        RecipeScreen(onNavigateToHome = {})
+//    }
+//}
+//
+////@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
+//@Composable
+//fun RecipePreviewDark() {
+//    HiveTheme(dynamicColor = false) {
+//        RecipeScreen(onNavigateToHome = {})
+//    }
+//}
 
 class RecipeViewModel(
     private val repository: PerplexityRepository = PerplexityRepository()
