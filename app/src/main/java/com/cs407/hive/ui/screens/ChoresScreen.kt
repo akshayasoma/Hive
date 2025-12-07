@@ -472,7 +472,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                 validateChoreName()
                                             },
                             label = { Text("Chore Name",
-                                fontFamily = CooperBt, color = textColor) }, //font added
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic, color = textColor) }, //font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             isError = choreNameError != null,
@@ -486,6 +487,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
                                 focusedBorderColor = Color.DarkGray,
                                 unfocusedBorderColor = Color.DarkGray,
                                 errorBorderColor = Color.Red
@@ -513,7 +516,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                 }
                                 validatePoints()
                                             },
-                            label = { Text("Points", fontFamily = CooperBt, color = textColor) }, //font added
+                            label = { Text("Points", fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic, color = textColor) }, //font added
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             isError = pointsError != null,
@@ -527,6 +531,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
                                 focusedBorderColor = Color.DarkGray,
                                 unfocusedBorderColor = Color.DarkGray,
                                 errorBorderColor = Color.Red
@@ -558,7 +564,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                 validateDescription()
                                             },
                             label = { Text("Description",
-                                fontFamily = CooperBt, color = textColor) }, //font added
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic, color = textColor) }, //font added
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -574,6 +581,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
                                 focusedBorderColor = Color.DarkGray,
                                 unfocusedBorderColor = Color.DarkGray,
                                 errorBorderColor = Color.Red

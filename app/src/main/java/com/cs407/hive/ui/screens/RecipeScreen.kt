@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.compose.animation.animateContentSize
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -94,6 +95,21 @@ fun RecipeScreen(
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+
+    var ingredientNameError by remember { mutableStateOf<String?>(null) }
+
+    fun validateIngredientName(): Boolean {
+        return if (ingredientName.isBlank()) {
+            ingredientNameError = "Ingredient name cannot be empty!"
+            false
+        } else if (ingredientName.length > 40) {
+            ingredientNameError = "Ingredient name too long!"
+            false
+        } else {
+            ingredientNameError = null
+            true
+        }
+    }
 
     // Hardcoded recipe notes
     val hardcodedRecipes = remember {
@@ -440,7 +456,9 @@ fun RecipeScreen(
 
                 // Add Ingredient Button
                 Button(
-                    onClick = { showAddIngredientDialog = true },
+                    onClick = {
+                        ingredientNameError = null
+                        showAddIngredientDialog = true },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -465,13 +483,28 @@ fun RecipeScreen(
                 MaterialTheme.colorScheme.onSecondary
             }
             AlertDialog(
-                onDismissRequest = { showAddIngredientDialog = false },
+                onDismissRequest = {
+                    ingredientNameError = null
+                    showAddIngredientDialog = false },
                 title = { Text("Add a New Ingredient", fontFamily = CooperBt) }, //font added
                 text = {
+                    val errorColor = if (darkModeState) Color.Red else MaterialTheme.colorScheme.error
                     Column {
+                        if (ingredientNameError != null) {
+                            Text(
+                                text = ingredientNameError!!,
+                                color = errorColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
                         OutlinedTextField(
                             value = ingredientName,
-                            onValueChange = { ingredientName = it },
+                            onValueChange = { newValue ->
+                                ingredientName = newValue.take(41)
+                                validateIngredientName() },
                             label = {
                                 Text("Ingredient Name",
                                     fontWeight = FontWeight.Bold,
@@ -480,7 +513,24 @@ fun RecipeScreen(
                                 )
                                     },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = ingredientNameError != null,
+                            trailingIcon = {
+                                if (ingredientNameError != null) {
+                                    Icon(
+                                        Icons.Default.Error,
+                                        contentDescription = "Error",
+                                        tint = errorColor
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = Color.DarkGray,
+                                unfocusedBorderColor = Color.DarkGray,
+                                errorBorderColor = Color.Red
+                            ),
                         )
                     }
                 },
@@ -497,11 +547,16 @@ fun RecipeScreen(
                         MaterialTheme.colorScheme.onSecondary
                     }
                     TextButton(onClick = {
-                        if (ingredientName.isNotBlank()) {
-                            viewModel.addIngredient(
-                                ingredientName.trim().replaceFirstChar { it.uppercase() })
+                        ingredientNameError = null
+                        val nameValid = validateIngredientName()
+                        if(nameValid) {
+                            if (ingredientName.isNotBlank()) {
+                                viewModel.addIngredient(
+                                    ingredientName.trim().replaceFirstChar { it.uppercase() })
+                            }
+                            ingredientName = ""
+                            ingredientNameError = null
                         }
-                        ingredientName = ""
                         showAddIngredientDialog = false
                     },
                         colors = ButtonDefaults.textButtonColors(
@@ -526,6 +581,7 @@ fun RecipeScreen(
                     }
                     TextButton(onClick = {
                         ingredientName = ""
+                        ingredientNameError = null
                         showAddIngredientDialog = false
                     },
                         colors = ButtonDefaults.textButtonColors(

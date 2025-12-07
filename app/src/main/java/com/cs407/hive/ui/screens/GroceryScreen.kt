@@ -450,6 +450,8 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
                                 focusedBorderColor = Color.DarkGray,
                                 unfocusedBorderColor = Color.DarkGray,
                                 errorBorderColor = Color.Red
@@ -497,6 +499,8 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
                                 focusedBorderColor = Color.DarkGray,
                                 unfocusedBorderColor = Color.DarkGray,
                                 errorBorderColor = Color.Red
