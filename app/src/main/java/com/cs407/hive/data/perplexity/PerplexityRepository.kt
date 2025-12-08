@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream
 import android.graphics.Bitmap
 
 class PerplexityRepository(
-    private val api: PerplexityApi = PerplexityApi("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")
+    private val api: PerplexityApi = PerplexityApi(com.cs407.hive.BuildConfig.API_KEY)
 ) {
     suspend fun analyzeBitmap(bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
         val base64 = bitmap.compressToBase64()
