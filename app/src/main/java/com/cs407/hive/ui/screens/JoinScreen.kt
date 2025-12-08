@@ -78,6 +78,8 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+    var groupIdError by remember { mutableStateOf(false) }
+    var userNameError by remember { mutableStateOf(false)}
 
     Box(
         modifier = Modifier
@@ -114,6 +116,17 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                 BeeAnimation()
             }
 
+            if (userNameError) {
+                Text(
+                    text = "Username too long!",
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    fontFamily = CooperBt
+                )
+            }
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,7 +141,15 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                 // Username TextField
                 OutlinedTextField(
                     value = userName,
-                    onValueChange = { userName = it },
+                    onValueChange = {
+                        if (it.text.length <= 15) {
+                            userName = it
+                            userNameError = false
+                        } else {
+                            userNameError = true
+                        }
+
+                                    },
                     label = {
                         Text(
                             text = stringResource(id = R.string.username),
@@ -157,6 +178,7 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                     singleLine = true
                 )
             }
+
 
             // Group ID TextField
             Surface(
@@ -194,7 +216,22 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                     singleLine = true
                 )
 
+
             }
+
+            if (groupIdError) {
+                Text(
+                    text = "Incorrect Group ID",
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    fontFamily = CooperBt
+                )
+            }
+
+
 
 
             // Spacer
@@ -280,10 +317,12 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
 
                                     val response = api.joinGroup(joinRoom)
                                     Log.d("JoinScreen", "Joined group successfully")
+                                    groupIdError = false
                                     onNavigateToHome(joinRoom.groupId)
                                 }
                                 catch(e: Exception){
                                     Log.e("JoinScreen", "Join error: ${e.message}")
+                                    groupIdError = true
                                 }
 
                             }

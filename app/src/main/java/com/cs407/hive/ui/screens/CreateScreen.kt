@@ -78,11 +78,15 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
         Font(R.font.cooper_bt_bold)
     )
 
+    var userNameError by remember { mutableStateOf(false)}
+    var grpNameError by remember {mutableStateOf(false)}
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                color = MaterialTheme.colorScheme.background),
+                color = MaterialTheme.colorScheme.background
+            ),
                 contentAlignment = Alignment.Center
     ) {
         Column(
@@ -103,13 +107,30 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                     .border(2.dp, MaterialTheme.colorScheme.onSecondary, CircleShape)
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(color = if (isSystemInDarkTheme())
-                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f) // dark mode, more transparent
-                    else
-                        MaterialTheme.colorScheme.onPrimary ), //light mode same as text field color
+                    .background(
+                        color = if (isSystemInDarkTheme())
+                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f) // dark mode, more transparent
+                        else
+                            MaterialTheme.colorScheme.onPrimary
+                    ), //light mode same as text field color
                 contentAlignment = Alignment.Center
             ) {
                 BeeAnimation()
+            }
+
+            if (userNameError || grpNameError) {
+
+                Text(
+                    text = if(userNameError) {"Username too long!" } else {
+                        "Group Name too long!"
+                    },
+                    color = Color.Red,
+                    fontFamily = CooperBt,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .fillMaxWidth()
+                )
             }
 
             Surface(
@@ -126,7 +147,10 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                 // Group Name TextField
                 OutlinedTextField(
                     value = groupName,
-                    onValueChange = { groupName = it },
+                    onValueChange = {
+                        groupName = it
+                        grpNameError = it.text.length > 30
+                    },
                     label = {
                         Text(
                             text = stringResource(id = R.string.group_name),
@@ -165,7 +189,11 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                 // Username TextField
                 OutlinedTextField(
                     value = userName,
-                    onValueChange = { userName = it },
+                    onValueChange = {
+                        userName = it
+                        userNameError = it.text.length > 15
+
+                    },
                     label = {
                         Text(
                             text = stringResource(id = R.string.username),

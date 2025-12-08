@@ -66,7 +66,7 @@ import com.cs407.hive.ui.screens.camera.CameraViewModel
 import java.io.File
 
 @Composable
-fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewModel) {
+fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewModel, darkModeState : Boolean) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewModel: CameraViewModel = viewModel()
@@ -90,19 +90,19 @@ fun CameraScreen(onNavigateToRecipe: () -> Unit, recipeViewModel: RecipeViewMode
         Font(R.font.cooper_bt_bold)
     )
 
-    val textColor = if (isSystemInDarkTheme()) {
+    val textColor = if (darkModeState) {
         MaterialTheme.colorScheme.onTertiary
     } else {
         MaterialTheme.colorScheme.onSecondary
     }
 
-    val buttonColor = if (isSystemInDarkTheme()) {
+    val buttonColor = if (darkModeState) {
         MaterialTheme.colorScheme.onPrimary
     } else {
         MaterialTheme.colorScheme.onTertiary
     }
 
-    val buttonColor2 = if (isSystemInDarkTheme()) {
+    val buttonColor2 = if (darkModeState) {
         MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
     } else {
         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
