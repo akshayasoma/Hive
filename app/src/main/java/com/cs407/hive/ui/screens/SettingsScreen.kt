@@ -66,6 +66,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
@@ -448,7 +449,7 @@ fun SettingsScreen(
         }
 
         if (showDialog) {
-            val textColor = if (isSystemInDarkTheme()) {
+            val textColor = if (darkModeState) {
                 MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSecondary
@@ -469,13 +470,13 @@ fun SettingsScreen(
                     }
                 },
                 confirmButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondaryContainer
                     } else {
                         MaterialTheme.colorScheme.onTertiary
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -515,13 +516,13 @@ fun SettingsScreen(
                 },
 
                 dismissButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
                     } else {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -545,7 +546,7 @@ fun SettingsScreen(
         }
 
         if (showDialogLeave) {
-            val textColor = if (isSystemInDarkTheme()) {
+            val textColor = if (darkModeState) {
                 MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSecondary
@@ -566,13 +567,13 @@ fun SettingsScreen(
                     }
                 },
                 confirmButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondaryContainer
                     } else {
                         MaterialTheme.colorScheme.onTertiary
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary
@@ -614,13 +615,13 @@ fun SettingsScreen(
                 },
 
                 dismissButton = {
-                    val buttonColor = if (isSystemInDarkTheme()) {
+                    val buttonColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
                     } else {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
                     }
 
-                    val textColor = if (isSystemInDarkTheme()) {
+                    val textColor = if (darkModeState) {
                         MaterialTheme.colorScheme.onSecondary
                     } else {
                         MaterialTheme.colorScheme.onSecondary

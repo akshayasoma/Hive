@@ -186,7 +186,8 @@ fun AppNavigation(
             ChoresScreen(
                 deviceId = deviceId,
                 groupId = groupId!!,
-                onNavigateToHome = { navController.navigate("home")}
+                onNavigateToHome = { navController.navigate("home")},
+                darkModeState = isDarkTheme
             )
         }
 
@@ -194,7 +195,8 @@ fun AppNavigation(
             GroceryScreen(
                 deviceId = deviceId,
                 groupId = groupId!!,
-                onNavigateToHome = { navController.navigate("home")}
+                onNavigateToHome = { navController.navigate("home")},
+                darkModeState = isDarkTheme
             )
         }
 
@@ -202,7 +204,8 @@ fun AppNavigation(
             RecipeScreen(
                 onNavigateToHome = { navController.navigate("home")},
                 onNavigateToCamera = { navController.navigate("camera") },
-                viewModel = recipeViewModel
+                viewModel = recipeViewModel,
+                darkModeState = isDarkTheme
 
             )
         }
@@ -210,7 +213,8 @@ fun AppNavigation(
         composable("camera") {
             CameraScreen(
                 onNavigateToRecipe = { navController.navigate("recipe") },
-                recipeViewModel = recipeViewModel
+                recipeViewModel = recipeViewModel,
+                darkModeState = isDarkTheme
             )
         }
 
@@ -235,7 +239,8 @@ fun AppNavigation(
 
         composable("leaderboard"){
             LeaderboardScreen (
-                onNavigateToHome = { navController.navigate("home")}
+                onNavigateToHome = { navController.navigate("home")},
+                darkModeState =  isDarkTheme
             )
         }
 

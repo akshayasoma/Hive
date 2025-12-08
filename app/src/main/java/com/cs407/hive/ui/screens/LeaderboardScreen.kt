@@ -36,7 +36,7 @@ import com.cs407.hive.ui.theme.HiveTheme
 import com.cs407.hive.R
 
 @Composable
-fun LeaderboardScreen(onNavigateToHome: () -> Unit) {
+fun LeaderboardScreen(onNavigateToHome: () -> Unit, darkModeState : Boolean) {
     //font
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
@@ -245,18 +245,18 @@ fun LBCard(
 }
 
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
-@Composable
-fun LeaderboardPreviewLight() {
-    HiveTheme(dynamicColor = false) {
-        LeaderboardScreen( onNavigateToHome = {})
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
-@Composable
-fun LeaderboardPreviewDark() {
-    HiveTheme(dynamicColor = false) {
-        LeaderboardScreen(onNavigateToHome = {})
-    }
-}
+////@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
+//@Composable
+//fun LeaderboardPreviewLight() {
+//    HiveTheme(dynamicColor = false) {
+//        LeaderboardScreen( onNavigateToHome = {})
+//    }
+//}
+//
+////@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
+//@Composable
+//fun LeaderboardPreviewDark() {
+//    HiveTheme(dynamicColor = false) {
+//        LeaderboardScreen(onNavigateToHome = {})
+//    }
+//}
