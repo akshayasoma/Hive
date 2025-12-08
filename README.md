@@ -83,7 +83,7 @@ Observer: <br>
 Coordinator: <br>
 
 #### Accomplishments:
-Kavya:<br>
+Kavya: Added finer datails for the app to be more cohesive. Added error statements visible to the user along with its logic. Fixed the in app dark/light mode UI errors.<br>
 Glenn:<br>
 Pranav:<br>
 Akshaya:<br>
