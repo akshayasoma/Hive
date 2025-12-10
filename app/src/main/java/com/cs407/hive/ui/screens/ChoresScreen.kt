@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.R
 import com.cs407.hive.data.model.AddChoreRequest
+import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.UiChore
 import com.cs407.hive.data.network.ApiClient
@@ -420,6 +421,29 @@ fun ChoresScreen(
 
                                             api.addChore(updateRequest)
 
+                                            // NEW: If chore is being marked as completed and has an assignee
+                                            if (statusInt == 2 && currentChore.assignee.isNotBlank() && currentChore.assignee != "Unassigned") {
+                                                try {
+                                                    // Call the completeChore API to update points
+                                                    val completeRequest = CompleteChoreRequest(
+                                                        groupId = groupId,
+                                                        deviceId = deviceId,
+                                                        choreName = currentChore.name,
+                                                        description = currentChore.description,
+                                                        points = currentChore.points
+                                                    )
+
+                                                    api.completeChore(completeRequest)
+
+                                                    toastMessage = "Updated ${currentChore.name} status to $newStatus and added ${currentChore.points} points"
+                                                } catch (e: Exception) {
+                                                    Log.e("ChoresScreen", "Error updating points via completeChore: $e")
+                                                    toastMessage = "Updated ${currentChore.name} status to $newStatus (points update failed)"
+                                                }
+                                            } else {
+                                                toastMessage = "Updated ${currentChore.name} status to $newStatus"
+                                            }
+
                                             chores = chores.map { c ->
                                                 if (c.name == currentChore.name &&
                                                     c.description == currentChore.description &&
@@ -427,8 +451,6 @@ fun ChoresScreen(
                                                     c.copy(status = statusInt)
                                                 } else c
                                             }
-
-                                            toastMessage = "Updated ${currentChore.name} status to $newStatus"
                                         } catch (e: Exception) {
                                             e.printStackTrace()
                                             toastMessage = "Failed to update status: ${e.message}"
