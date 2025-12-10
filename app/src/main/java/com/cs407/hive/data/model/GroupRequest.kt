@@ -166,6 +166,11 @@ data class DeleteGroceryRequest(
 )
 
 data class UpdateProfilePicRequest(
-    val userId: String,
+    val deviceId: String,
+    val profilePic: String
+)
+
+data class UpdateProfilePicResponse(
+    val message: String,
     val profilePic: String
 )

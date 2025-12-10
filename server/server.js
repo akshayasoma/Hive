@@ -575,6 +575,34 @@ app.post("/api/group/deleteChore", async (req, res) => {
 });
 
 
+app.post("/api/user/updateProfilePic", async (req, res) => {
+  try {
+    const { deviceId, profilePic } = req.body;
+    console.log("Updating profile picture with deviceId: ", deviceId, " profilePic: ", profilePic);
+    // Make sure valid request
+    if (!deviceId || typeof profilePic !== "string") {
+      return res.status(400).json({ error: "deviceId and profilePic are required" });
+    }
+
+    // Make sure user exists
+    const user = await User.findOne({ userId: deviceId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Update profile picture and save
+    user.profilePic = profilePic;
+    await user.save();
+
+    return res.json({
+      message: "Profile picture updated successfully",
+      profilePic: user.profilePic
+    });
+
+  } catch (err) {
+    console.error("PROFILE PIC UPDATE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/api/group/updateName", async (req, res) => {
     try {
         console.log("Changing Group Name!")

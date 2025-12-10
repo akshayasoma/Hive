@@ -65,6 +65,7 @@ import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.GetUserNamesRequest
 import com.cs407.hive.data.model.UiChore
+import com.cs407.hive.data.model.UpdateProfilePicRequest
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.workers.WorkerTestUtils
 import kotlinx.coroutines.delay
@@ -337,17 +338,14 @@ fun ChoresScreen(
                     onClick = { showInfo = !showInfo
                         scope.launch {
                             try{
-
-                                val response = api.getGroupLeaderboard(
-                                    mapOf("groupId" to groupId,
-                                        "deviceId" to deviceId)
+                                val req = UpdateProfilePicRequest(
+                                    deviceId = deviceId,
+                                    profilePic = "imageUrlTest2.0"
                                 )
+                                val response = api.updateProfilePic(req)
+                                Log.d("SettingsScreen", "Updated pic: ${response.profilePic}")
 
-                                val leaderboard = response.leaderboard
-                                Log.d("ChoresScreen", "Loaded ${leaderboard.size} user names with list ${leaderboard}")
-                                leaderboard.forEachIndexed { index, entry ->
-                                    Log.d("ChoresScreen", "${index + 1}. ${entry.name} - ${entry.points} points")
-                                }
+
                             }
                             catch(e: Exception){
                                 e.printStackTrace()
