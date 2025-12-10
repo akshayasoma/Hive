@@ -90,6 +90,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
     var chores by remember { mutableStateOf(listOf<UiChore>()) }
     var showInfo by remember { mutableStateOf(false) }
     var deleteMode by remember { mutableStateOf(false) }
+    var groupMembers by remember { mutableStateOf<List<String>>(emptyList()) }
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
@@ -155,6 +156,27 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
         val pointsValid = validatePoints()
         val descValid = validateDescription()
         return nameValid && pointsValid && descValid
+    }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = api.getGroup(mapOf("groupId" to groupId))
+                val serverChores = response.group.chores ?: emptyList()
+
+                chores = serverChores.map { chore ->
+                    UiChore(
+                        name = chore.name,
+                        description = chore.description,
+                        points = chore.points,
+                        status = chore.status,
+                        assignee = chore.assignee
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     LaunchedEffect(toastMessage) {
@@ -305,15 +327,36 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
 
                                 }
                             },
-                            groupMembers = listOf("User1", "User2", "User3"), // Replace with actual group members
+                            groupMembers = groupMembers, // Replace with actual group members
                             onAssignUser = { assignedUser: String ->
                                 scope.launch {
                                     try {
-                                        if (assignedUser.isEmpty()) {
-                                            // Keep as Unassigned
-                                            toastMessage = "Chore '$name' is unassigned"
+                                        // Call API to update chore assignment
+                                        val updateRequest = AddChoreRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = chore.name,
+                                            description = chore.description,
+                                            points = chore.points,
+                                            assignee = if (assignedUser == "Unassigned") "" else assignedUser,
+                                            status = chore.status
+                                        )
+
+                                        api.addChore(updateRequest)
+
+                                        // Update local state
+                                        chores = chores.map { c ->
+                                            if (c.name == chore.name && c.description == chore.description) {
+                                                c.copy(assignee = if (assignedUser == "Unassigned") "" else assignedUser)
+                                            } else {
+                                                c
+                                            }
+                                        }
+
+                                        if (assignedUser.isEmpty() || assignedUser == "Unassigned") {
+                                            toastMessage = "Chore '${chore.name}' is unassigned"
                                         } else {
-                                            toastMessage = "Assigned $name to $assignedUser"
+                                            toastMessage = "Assigned ${chore.name} to $assignedUser"
                                         }
                                     } catch (e: Exception) {
                                         e.printStackTrace()
@@ -330,7 +373,30 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                             "Completed" -> 2
                                             else -> 0
                                         }
-                                        toastMessage = "Updated $name status to $newStatus"
+
+                                        // Call API to update chore status
+                                        val updateRequest = AddChoreRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = chore.name,
+                                            description = chore.description,
+                                            points = chore.points,
+                                            assignee = chore.assignee,
+                                            status = statusInt
+                                        )
+
+                                        api.addChore(updateRequest)
+
+                                        // Update local state
+                                        chores = chores.map { c ->
+                                            if (c.name == chore.name && c.description == chore.description) {
+                                                c.copy(status = statusInt)
+                                            } else {
+                                                c
+                                            }
+                                        }
+
+                                        toastMessage = "Updated ${chore.name} status to $newStatus"
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                         toastMessage = "Failed to update status: ${e.message}"
