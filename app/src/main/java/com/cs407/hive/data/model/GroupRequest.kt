@@ -41,6 +41,16 @@ data class UserDetail(
     val choreRegister: List<CompletedChore>,
 )
 
+data class UserNamesResponse(
+    val names: List<String>
+)
+
+data class GetUserNamesRequest(
+    val groupId: String,
+    val deviceId: String
+)
+
+
 data class GroupResponse(
     val group: GroupDetail
 )

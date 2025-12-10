@@ -63,6 +63,7 @@ import com.cs407.hive.R
 import com.cs407.hive.data.model.AddChoreRequest
 import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
+import com.cs407.hive.data.model.GetUserNamesRequest
 import com.cs407.hive.data.model.UiChore
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.workers.WorkerTestUtils
@@ -263,7 +264,26 @@ fun ChoresScreen(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Button(
-                    onClick = { showInfo = !showInfo },
+                    onClick = { showInfo = !showInfo
+                        scope.launch {
+                            try{
+
+                                val response = api.getUserNames(
+                                    GetUserNamesRequest(
+                                        groupId = groupId,
+                                        deviceId = deviceId
+                                    )
+                                )
+
+                                val names = response.names
+                                Log.d("ChoresScreen", "Loaded ${names.size} user names with list ${names.toList()}")
+                            }
+                            catch(e: Exception){
+                                e.printStackTrace()
+                                Log.e("ChoresScreen", "Error loading data: $e")
+                            }
+                        }
+                              },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
