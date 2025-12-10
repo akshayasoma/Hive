@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 // connect to MongoDB Atlas
+console.log(process.env.MONGO_URI)
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -60,7 +61,7 @@ const userSchema = new mongoose.Schema({
            type: Number,
            default: 0
          },
-  profilePicture: {
+  profilePic: {
                type: String,
                default: ""
              },
@@ -176,7 +177,7 @@ app.post("/api/groups", async (req, res) => {
         userId: creatorId,
         name: creatorName,
         points: 0,
-        profilePicture: "",
+        profilePic: "",
       });
 
       await user.save();
@@ -227,7 +228,7 @@ app.post("/api/group/join", async (req, res) => {
         userId: deviceId,
         name: userName,
         points: 0,
-        profilePicture: "",
+        profilePic: "",
       });
       await user.save();
     }
@@ -257,6 +258,94 @@ app.post("/api/user/get", async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.post("/api/group/leaderboard", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+
+    // Make sure groupid exists
+    if (!groupId) {
+      return res.status(400).json({ error: "groupId required" });
+    }
+
+    // Get the group
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Auth check
+    if (!group.peopleList.includes(deviceId)) {
+        return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    // Extract all userIds from peopleList
+    const deviceIds = group.peopleList;
+
+    // Get all users in the group
+    const users = await User.find(
+      { userId: { $in: deviceIds } },   // filter
+      { name: 1, points: 1, _id: 1 }    // select fields
+    ).sort({
+      points: -1,  // higher points first
+      _id: 1       // stable tie-breaker
+    });
+    // Create the leaderboard. Users already sorted.
+    const leaderboard = users.map(u => ({
+      name: u.name,
+      points: u.points
+    }));
+    // Return the leaderboard
+    res.json({ leaderboard });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/getUserNames", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+    console.log("Get group user names with groupId: ", groupId)
+
+
+    // Make sure the group id is valid
+    if (!groupId) {
+      return res.status(400).json({ error: "groupId is required" });
+    }
+    console.log("Finding group")
+    // Make sure it exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    console.log("Group Exists, getting deviceid")
+
+    // AUTH CHECK
+    if (!group.peopleList.includes(deviceId)) {
+        return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    // Get device IDs from the peopleList
+    const deviceIds = group.peopleList;
+
+    // Make sure people actually exist in the hive
+    if (!deviceIds || deviceIds.length === 0) {
+      return res.json({ names: [] });
+    }
+    console.log("More than 0 people exist!")
+    // Find users and return only their names (_id: 0 comments out the default _id field)
+    const users = await User.find(
+      { userId: { $in: deviceIds } },
+      { name: 1, _id: 0 }
+    );
+
+    // Extract the names into a list and return it
+    const names = users.map(u => u.name);
+    console.log("List of names", names)
+    return res.json({ names });
+  } catch (err) {
+    console.error("GET MEMBER NAMES ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/api/group/get", async (req, res) => {

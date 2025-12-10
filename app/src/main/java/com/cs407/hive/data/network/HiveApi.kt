@@ -6,12 +6,15 @@ import com.cs407.hive.data.model.CheckLoginResponse
 import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.DeleteGroceryRequest
+import com.cs407.hive.data.model.GetUserNamesRequest
 import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.data.model.GroupResponse
 import com.cs407.hive.data.model.JoinGroupRequest
+import com.cs407.hive.data.model.LeaderboardResponse
 import com.cs407.hive.data.model.LeaveGroupRequest
 import com.cs407.hive.data.model.UpdateGroupNameRequest
 import com.cs407.hive.data.model.UpdateUserNameRequest
+import com.cs407.hive.data.model.UserNamesResponse
 import com.cs407.hive.data.model.UserResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -31,6 +34,12 @@ interface HiveApi {
 
     @POST("/api/user/get")
     suspend fun getUser(@Body body: Map<String, String>): UserResponse
+
+    @POST("/api/group/getUserNames")
+    suspend fun getUserNames(@Body body: GetUserNamesRequest): UserNamesResponse
+
+    @POST("/api/group/leaderboard")
+    suspend fun getGroupLeaderboard(@Body body: Map<String, String>): LeaderboardResponse
 
     @POST("/api/group/get")
     suspend fun getGroup(@Body body: Map<String, String>): GroupResponse
