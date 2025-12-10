@@ -162,6 +162,7 @@ app.post("/api/group/leave", async (req, res) => {
 app.post("/api/groups", async (req, res) => {
   try {
     const { groupName, creatorName, groupId, creatorId } = req.body;
+    console.log("Request:",groupName, creatorName, groupId, creatorId)
 //    if (!peopleList || peopleList.length === 0) {
 //          return res.status(400).json({ error: "peopleList (deviceId) required" });
 //    }
