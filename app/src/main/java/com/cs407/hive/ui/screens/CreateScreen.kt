@@ -264,8 +264,10 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                 // Save Button (Tick Icon)
                 Button(
                     onClick = {
+                        Log.d("CreateScreen", "whyyyyyy")
                         scope.launch {
                             try {
+                                Log.d("CreateScreen", "Try to log in")
                                 val room = GroupRequest(
                                     groupName = groupName.text,
                                     creatorName = userName.text,
