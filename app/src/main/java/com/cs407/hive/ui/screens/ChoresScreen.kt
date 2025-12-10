@@ -639,7 +639,7 @@ fun ChoresScreen(
                     )
                 }
 
-                // Add Button
+
                 Button(
                     onClick = {
                         choreNameError = null

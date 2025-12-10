@@ -234,7 +234,7 @@ fun LeaderboardScreen(
 @Composable
 fun getBeeProfileImage(role: String): Painter {
     return when (role.lowercase()) {
-        "queen", "queen bee" -> painterResource(id = R.drawable.profile_queen_bee)
+        "queen", "queen bee" -> painterResource(id = R.drawable.profile_heart_bee)
         "worker", "worker bee" -> painterResource(id = R.drawable.profile_cool_bee)
         "harvester", "harvester bee" -> painterResource(id = R.drawable.profile_honey_bee)
         else -> painterResource(id = R.drawable.profile_drone_bee)
