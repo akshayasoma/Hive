@@ -134,7 +134,8 @@ data class UiChore(
     val description: String,
     val points: Int,
     val status: Int,
-    val assignee: String
+    val assignee: String,
+    val profilePic: String
 )
 
 data class UiGrocery(
