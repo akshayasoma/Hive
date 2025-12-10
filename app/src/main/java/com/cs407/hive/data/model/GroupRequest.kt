@@ -45,6 +45,16 @@ data class UserNamesResponse(
     val names: List<String>
 )
 
+
+data class LeaderboardEntry(
+    val name: String,
+    val points: Int
+)
+
+data class LeaderboardResponse(
+    val leaderboard: List<LeaderboardEntry>
+)
+
 data class GetUserNamesRequest(
     val groupId: String,
     val deviceId: String

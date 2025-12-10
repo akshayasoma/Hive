@@ -268,15 +268,16 @@ fun ChoresScreen(
                         scope.launch {
                             try{
 
-                                val response = api.getUserNames(
-                                    GetUserNamesRequest(
-                                        groupId = groupId,
-                                        deviceId = deviceId
-                                    )
+                                val response = api.getGroupLeaderboard(
+                                    mapOf("groupId" to groupId,
+                                        "deviceId" to deviceId)
                                 )
 
-                                val names = response.names
-                                Log.d("ChoresScreen", "Loaded ${names.size} user names with list ${names.toList()}")
+                                val leaderboard = response.leaderboard
+                                Log.d("ChoresScreen", "Loaded ${leaderboard.size} user names with list ${leaderboard}")
+                                leaderboard.forEachIndexed { index, entry ->
+                                    Log.d("ChoresScreen", "${index + 1}. ${entry.name} - ${entry.points} points")
+                                }
                             }
                             catch(e: Exception){
                                 e.printStackTrace()

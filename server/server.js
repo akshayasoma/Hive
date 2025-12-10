@@ -260,6 +260,49 @@ app.post("/api/user/get", async (req, res) => {
     }
 });
 
+app.post("/api/group/leaderboard", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+
+    // Make sure groupid exists
+    if (!groupId) {
+      return res.status(400).json({ error: "groupId required" });
+    }
+
+    // Get the group
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Auth check
+    if (!group.peopleList.includes(deviceId)) {
+        return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    // Extract all userIds from peopleList
+    const deviceIds = group.peopleList;
+
+    // Get all users in the group
+    const users = await User.find(
+      { userId: { $in: deviceIds } },   // filter
+      { name: 1, points: 1, _id: 1 }    // select fields
+    ).sort({
+      points: -1,  // higher points first
+      _id: 1       // stable tie-breaker
+    });
+    // Create the leaderboard. Users already sorted.
+    const leaderboard = users.map(u => ({
+      name: u.name,
+      points: u.points
+    }));
+    // Return the leaderboard
+    res.json({ leaderboard });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/api/group/getUserNames", async (req, res) => {
   try {
     const { groupId, deviceId } = req.body;
