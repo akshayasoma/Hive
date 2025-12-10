@@ -30,6 +30,7 @@ import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.ui.theme.HiveTheme
 import com.cs407.hive.R
 import kotlinx.coroutines.launch
+import android.util.Log
 
 @Composable
 fun LeaderboardScreen(
@@ -45,19 +46,22 @@ fun LeaderboardScreen(
     var leaderboardData by remember { mutableStateOf<List<LeaderboardUser>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
-    val api = ApiClient.instance
+    val api = remember { ApiClient.instance }
 
     // Fetch leaderboard data
     LaunchedEffect(groupId) {
         scope.launch {
+            isLoading = true
             try {
-                // Get group details to fetch users
+                // Get group details to fetch users (similar to ChoresScreen)
                 val groupResponse = api.getGroup(mapOf("groupId" to groupId))
-                val userIds = groupResponse.group.peopleList
+                val userIds = groupResponse.group.peopleList ?: emptyList()
+
+                Log.d("LeaderboardScreen", "Found ${userIds.size} users in group")
 
                 // Fetch each user's details to get their points
                 val users = mutableListOf<LeaderboardUser>()
-                userIds.forEach { userId ->
+                for (userId in userIds) {
                     try {
                         val userResponse = api.getUser(mapOf("userId" to userId))
                         val user = userResponse.user
@@ -70,8 +74,10 @@ fun LeaderboardScreen(
                                 role = getRoleForUser(user.points)
                             )
                         )
+                        Log.d("LeaderboardScreen", "Loaded user: ${user.name} with ${user.points} points")
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        Log.e("LeaderboardScreen", "Error loading user $userId: $e")
                     }
                 }
 
@@ -82,11 +88,14 @@ fun LeaderboardScreen(
                     }
 
                 leaderboardData = sortedUsers
-                isLoading = false
+                Log.d("LeaderboardScreen", "Sorted ${sortedUsers.size} users for leaderboard")
+
             } catch (e: Exception) {
                 e.printStackTrace()
+                Log.e("LeaderboardScreen", "Error loading leaderboard: $e")
+                leaderboardData = emptyList()
+            } finally {
                 isLoading = false
-                // Fallback to empty list or handle error
             }
         }
     }
@@ -108,7 +117,7 @@ fun LeaderboardScreen(
 
             // Header
             Text(
-                text = "LEADERBOARD\n",
+                text = "LEADERBOARD",
                 fontFamily = CooperBt,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
@@ -133,12 +142,25 @@ fun LeaderboardScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "No users in the group yet!",
-                        fontFamily = CooperBt,
-                        fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "No users in the group yet!",
+                            fontFamily = CooperBt,
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Add members to see the leaderboard",
+                            fontFamily = CooperBt,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.5f),
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
                 }
             } else {
                 // LazyColumn for leaderboard

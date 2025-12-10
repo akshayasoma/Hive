@@ -159,19 +159,28 @@ fun ChoresScreen(
 
             groupMembers = members
 
-            chores = serverChores.map { chore ->
-                UiChore(
-                    name = chore.name,
-                    description = chore.description,
-                    points = chore.points,
-                    status = chore.status,
-                    assignee = chore.assignee
-                )
-            }.distinctBy { chore ->
-                "${chore.name}|${chore.description}|${chore.points}|${chore.status}|${chore.assignee}"
+            // Create a map to deduplicate chores based on name + description + assignee
+            val uniqueChores = mutableMapOf<String, UiChore>()
+
+            serverChores.forEach { chore ->
+                val key = "${chore.name}|${chore.description}|${chore.assignee}"
+                if (!uniqueChores.containsKey(key)) {
+                    uniqueChores[key] = UiChore(
+                        name = chore.name,
+                        description = chore.description,
+                        points = chore.points,
+                        status = chore.status,
+                        assignee = chore.assignee
+                    )
+                } else {
+                    // If duplicate found, log it
+                    Log.w("ChoresScreen", "Duplicate chore detected: $key")
+                }
             }
 
-            Log.d("ChoresScreen", "Loaded ${chores.size} chores and ${groupMembers.size} members")
+            chores = uniqueChores.values.toList()
+
+            Log.d("ChoresScreen", "Loaded ${chores.size} unique chores and ${groupMembers.size} members")
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("ChoresScreen", "Error loading data: $e")
@@ -196,19 +205,27 @@ fun ChoresScreen(
 
                 groupMembers = members
 
-                chores = serverChores.map { chore ->
-                    UiChore(
-                        name = chore.name,
-                        description = chore.description,
-                        points = chore.points,
-                        status = chore.status,
-                        assignee = chore.assignee
-                    )
-                }.distinctBy { chore ->
-                    "${chore.name}|${chore.description}|${chore.points}|${chore.status}|${chore.assignee}"
+                // Use the same deduplication logic as refresh function
+                val uniqueChores = mutableMapOf<String, UiChore>()
+
+                serverChores.forEach { chore ->
+                    val key = "${chore.name}|${chore.description}|${chore.assignee}"
+                    if (!uniqueChores.containsKey(key)) {
+                        uniqueChores[key] = UiChore(
+                            name = chore.name,
+                            description = chore.description,
+                            points = chore.points,
+                            status = chore.status,
+                            assignee = chore.assignee
+                        )
+                    } else {
+                        Log.w("ChoresScreen", "Duplicate chore detected on initial load: $key")
+                    }
                 }
 
-                Log.d("ChoresScreen", "Loaded ${chores.size} chores (after deduplication)")
+                chores = uniqueChores.values.toList()
+
+                Log.d("ChoresScreen", "Loaded ${chores.size} unique chores (after deduplication)")
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("ChoresScreen", "Error loading data: $e")
@@ -296,8 +313,8 @@ fun ChoresScreen(
                         items(
                             items = chores.reversed(),
                             key = { chore ->
-                                // Combine all fields with a delimiter to ensure uniqueness
-                                "${chore.name}|${chore.description}|${chore.points}|${chore.status}|${chore.assignee}"
+                                // Use the same unique key as the deduplication logic
+                                "${chore.name}|${chore.description}|${chore.assignee}"
                             }
                         ) { chore ->
                             val currentChore by rememberUpdatedState(chore)
@@ -329,12 +346,10 @@ fun ChoresScreen(
 
                                             api.deleteChore(deleteChore)
 
+                                            // Remove by unique key instead of comparing all fields
                                             chores = chores.filterNot {
-                                                it.name == currentChore.name &&
-                                                        it.description == currentChore.description &&
-                                                        it.points == currentChore.points &&
-                                                        it.status == currentChore.status &&
-                                                        it.assignee == currentChore.assignee
+                                                "${it.name}|${it.description}|${it.assignee}" ==
+                                                        "${currentChore.name}|${currentChore.description}|${currentChore.assignee}"
                                             }
 
                                             toastMessage = "Chore '${currentChore.name}' deleted"
