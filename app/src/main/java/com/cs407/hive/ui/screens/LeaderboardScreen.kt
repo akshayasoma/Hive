@@ -71,7 +71,7 @@ fun LeaderboardScreen(
                                 name = user.name,
                                 points = user.points,
                                 profilePic = user.profilePic,
-                                role = getRoleForUser(user.points)
+                                role = ""
                             )
                         )
                         Log.d("LeaderboardScreen", "Loaded user: ${user.name} with ${user.points} points")
@@ -84,7 +84,14 @@ fun LeaderboardScreen(
                 // Sort by points in descending order and assign ranks
                 val sortedUsers = users.sortedByDescending { it.points }
                     .mapIndexed { index, user ->
-                        user.copy(rank = index + 1)
+                        val rank = index + 1
+                        val role = when (rank) {
+                            1 -> "Queen Bee"      // 1st place
+                            2 -> "Worker Bee"     // 2nd place
+                            3 -> "Harvester"      // 3rd place
+                            else -> "Drone"       // Everyone else
+                        }
+                        user.copy(rank = rank, role = role)
                     }
 
                 leaderboardData = sortedUsers
@@ -318,15 +325,6 @@ fun LBCard(
     }
 }
 
-// Helper function to determine role based on points
-private fun getRoleForUser(points: Int): String {
-    return when {
-        points >= 1000 -> "Queen Bee"
-        points >= 500 -> "Worker Bee"
-        points >= 200 -> "Harvester"
-        else -> "Drone"
-    }
-}
 
 // Helper function to get placement string
 private fun getPlacementString(rank: Int): String {

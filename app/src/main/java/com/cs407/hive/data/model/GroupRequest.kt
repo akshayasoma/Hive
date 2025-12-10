@@ -164,3 +164,8 @@ data class DeleteGroceryRequest(
     val description: String,
     val completed: Boolean
 )
+
+data class UpdateProfilePicRequest(
+    val userId: String,
+    val profilePic: String
+)
