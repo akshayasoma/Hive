@@ -102,8 +102,7 @@ fun ChoresScreen(
 
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
-    var userMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-
+    var userMap by remember { mutableStateOf<Map<String, Pair<String, String>>>(emptyMap()) }
     // Validation functions
     fun validateChoreName(): Boolean {
         return if (choreName.isBlank()) {
@@ -154,10 +153,12 @@ fun ChoresScreen(
         return nameValid && pointsValid && descValid
     }
 
-    suspend fun fetchUserNames(): Map<String, String> {
-        val newUserMap = mutableMapOf<String, String>()
+    suspend fun fetchUserNames(): Map<String, Pair<String, String>> {
+        val newUserMap = mutableMapOf<String, Pair<String, String>>()
 
         try {
+            Log.d("ChoresScreen", "=== DEBUG: Starting fetchUserNames ===")
+
             val response = api.getUserNames(
                 GetUserNamesRequest(
                     groupId = groupId,
@@ -165,25 +166,74 @@ fun ChoresScreen(
                 )
             )
 
-            Log.d("ChoresScreen", "getUserNames API returned names: ${response.names}")
+            Log.d("ChoresScreen", "=== DEBUG: getUserNames API returned: ${response}")
+            Log.d("ChoresScreen", "=== DEBUG: Names list: ${response.names}")
 
             // Get member IDs from group
             val groupResponse = api.getGroup(mapOf("groupId" to groupId))
             val memberIds = groupResponse.group.peopleList ?: emptyList()
 
-            Log.d("ChoresScreen", "Group member IDs: $memberIds")
+            Log.d("ChoresScreen", "=== DEBUG: Found ${memberIds.size} member IDs: $memberIds")
+
+            if (memberIds.isEmpty()) {
+                Log.d("ChoresScreen", "=== DEBUG: No members found in group!")
+                return newUserMap
+            }
 
             memberIds.forEachIndexed { index, deviceId ->
-                val username = if (index < response.names.size) {
-                    response.names[index]
-                } else {
-                    "User ${index + 1}"
+                try {
+                    Log.d("ChoresScreen", "=== DEBUG: Processing member #${index + 1} with deviceId: '$deviceId' ===")
+
+                    // Get user details including profile picture
+                    Log.d("ChoresScreen", "=== DEBUG: Calling getUser API for deviceId: '$deviceId'")
+                    val userResponse = api.getUser(mapOf("deviceId" to deviceId))
+
+                    // Get the username - prefer the name from getUser API
+                    val username = userResponse.user.name
+                    Log.d("ChoresScreen", "=== DEBUG: Got username from API: '$username'")
+
+                    // Get profile picture - handle both null and empty string
+                    val profilePic = userResponse.user.profilePic ?: ""
+                    Log.d("ChoresScreen", "=== DEBUG: Got profilePic from API: '$profilePic'")
+
+                    // Determine final profile picture to use
+                    val finalProfilePic = when {
+                        // If API returns a valid non-empty profile pic, use it
+                        profilePic.isNotBlank() -> {
+                            Log.d("ChoresScreen", "=== DEBUG: Using API profilePic: '$profilePic'")
+                            profilePic
+                        }
+                        // Otherwise, assign based on username
+                        else -> {
+                            Log.d("ChoresScreen", "=== DEBUG: Assigning default based on username: '$username'")
+                            when (username.lowercase()) {
+                                "akshu" -> "heart_bee"
+                                "kiwi" -> "cool_bee"
+                                else -> "ai_bee" // default
+                            }
+                        }
+                    }
+
+                    Log.d("ChoresScreen", "=== DEBUG: Final mapping: $deviceId -> username='$username', profilePic='$finalProfilePic'")
+                    newUserMap[deviceId] = username to finalProfilePic
+
+                } catch (e: Exception) {
+                    Log.e("ChoresScreen", "=== DEBUG: Error fetching user details for $deviceId", e)
+                    // On error, use a placeholder
+                    val username = "User ${index + 1}"
+                    Log.d("ChoresScreen", "=== DEBUG: Using error fallback: $deviceId -> ($username, ai_bee)")
+                    newUserMap[deviceId] = username to "ai_bee"
                 }
-                newUserMap[deviceId] = username
+            }
+
+            // Log the final userMap
+            Log.d("ChoresScreen", "=== DEBUG: Final userMap (${newUserMap.size} entries) ===")
+            newUserMap.forEach { (deviceId, pair) ->
+                Log.d("ChoresScreen", "  '$deviceId' -> username='${pair.first}', profilePic='${pair.second}'")
             }
 
         } catch (e: Exception) {
-            Log.e("ChoresScreen", "Error fetching usernames: $e")
+            Log.e("ChoresScreen", "=== DEBUG: Error in fetchUserNames", e)
         }
 
         return newUserMap
@@ -203,7 +253,7 @@ fun ChoresScreen(
             userMap = fetchedUserMap
 
             // Create a list of usernames
-            groupMembers = fetchedUserMap.values.toList().distinct()
+            groupMembers = fetchedUserMap.values.map { it.first }.distinct()
 
             Log.d("ChoresScreen", "Group members (usernames): $groupMembers")
 
@@ -216,9 +266,15 @@ fun ChoresScreen(
 
                 if (!uniqueChores.containsKey(key)) {
                     val assigneeUsername = if (chore.assignee.isNotBlank()) {
-                        userMap[chore.assignee] ?: "Unknown User"
+                        userMap[chore.assignee]?.first ?: "Unknown User" // Get first element of pair (username)
                     } else {
                         ""
+                    }
+
+                    val assigneeProfilePic = if (chore.assignee.isNotBlank()) {
+                        userMap[chore.assignee]?.second ?: "ai_bee" // Get second element of pair (profilePic)
+                    } else {
+                        "ai_bee"
                     }
 
                     uniqueChores[key] = UiChore(
@@ -226,7 +282,8 @@ fun ChoresScreen(
                         description = chore.description.trim(),
                         points = chore.points,
                         status = chore.status,
-                        assignee = assigneeUsername
+                        assignee = assigneeUsername,
+                        profilePic = assigneeProfilePic
                     )
                 } else {
                     Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
@@ -265,7 +322,7 @@ fun ChoresScreen(
                 userMap = fetchedUserMap
 
                 // Create username list
-                groupMembers = fetchedUserMap.values.toList().distinct()
+                groupMembers = fetchedUserMap.values.map { it.first }.distinct() // Add .map { it.first }
 
                 Log.d("ChoresScreen", "Initial load - usernames: $groupMembers")
 
@@ -280,9 +337,15 @@ fun ChoresScreen(
                     if (!uniqueChores.containsKey(key)) {
                         // Convert assignee to username
                         val assigneeUsername = if (chore.assignee.isNotBlank()) {
-                            userMap[chore.assignee] ?: "Unknown User"
+                            userMap[chore.assignee]?.first ?: "Unknown User" // Add ?.first
                         } else {
                             ""
+                        }
+
+                        val assigneeProfilePic = if (chore.assignee.isNotBlank()) {
+                            userMap[chore.assignee]?.second ?: "ai_bee" // Get second element of pair (profilePic)
+                        } else {
+                            "ai_bee"
                         }
 
                         uniqueChores[key] = UiChore(
@@ -290,7 +353,8 @@ fun ChoresScreen(
                             description = chore.description.trim(),
                             points = chore.points,
                             status = chore.status,
-                            assignee = assigneeUsername
+                            assignee = assigneeUsername,
+                            profilePic = assigneeProfilePic
                         )
                     } else {
                         Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
@@ -424,6 +488,11 @@ fun ChoresScreen(
                                 onDelete = {
                                     scope.launch {
                                         try {
+                                            // Find device ID for current assignee
+                                            val assigneeEntry = userMap.entries
+                                                .firstOrNull { it.value.first == currentChore.assignee }
+                                            val assigneeDeviceId = assigneeEntry?.key ?: ""
+
                                             val deleteChore = DeleteChoreRequest(
                                                 groupId = groupId,
                                                 deviceId = deviceId,
@@ -431,7 +500,7 @@ fun ChoresScreen(
                                                 description = currentChore.description,
                                                 points = currentChore.points,
                                                 status = currentChore.status,
-                                                assignee = currentChore.assignee
+                                                assignee = assigneeDeviceId // Use device ID, not username
                                             )
 
                                             api.deleteChore(deleteChore)
@@ -457,8 +526,9 @@ fun ChoresScreen(
                                     scope.launch {
                                         try {
                                             // Convert username back to device ID for the API
-                                            val assignedDeviceId = userMap.entries
-                                                .firstOrNull { it.value == assignedUsername }?.key ?: ""
+                                            val assignedEntry = userMap.entries
+                                                .firstOrNull { it.value.first == assignedUsername } // Compare with first element
+                                            val assignedDeviceId = assignedEntry?.key ?: ""
 
                                             val updateRequest = AddChoreRequest(
                                                 groupId = groupId,
@@ -502,13 +572,18 @@ fun ChoresScreen(
                                                 else -> 0
                                             }
 
+                                            // Fix this line - need to compare with .first
+                                            val assignedEntry = userMap.entries
+                                                .firstOrNull { it.value.first == currentChore.assignee }
+                                            val assignedDeviceId = assignedEntry?.key ?: ""
+
                                             val updateRequest = AddChoreRequest(
                                                 groupId = groupId,
                                                 deviceId = deviceId,
                                                 name = currentChore.name,
                                                 description = currentChore.description,
                                                 points = currentChore.points,
-                                                assignee = currentChore.assignee,
+                                                assignee = assignedDeviceId, // Use assignedDeviceId
                                                 status = statusInt
                                             )
 
@@ -516,10 +591,6 @@ fun ChoresScreen(
 
                                             if (statusInt == 2 && currentChore.assignee.isNotBlank() && currentChore.assignee != "Unassigned") {
                                                 try {
-                                                    val assignedDeviceId = userMap.entries
-                                                        .firstOrNull { it.value == currentChore.assignee }?.key
-                                                        ?: ""
-
                                                     if (assignedDeviceId.isNotBlank()) {
                                                         val completeRequest = CompleteChoreRequest(
                                                             groupId = groupId,
@@ -560,7 +631,9 @@ fun ChoresScreen(
                                         }
                                     }
                                 },
-                                darkModeState = darkModeState
+                                darkModeState = darkModeState,
+                                userMap = userMap,
+                                profilePic = currentChore.profilePic
                             )
                         }
                     } else {
@@ -1100,7 +1173,9 @@ fun ChoreCard(
     groupMembers: List<String> = emptyList(),
     onAssignUser: (String) -> Unit = {},
     onChangeStatus: (String) -> Unit = {},
-    darkModeState: Boolean
+    darkModeState: Boolean,
+    userMap: Map<String, Pair<String, String>>,
+    profilePic: String
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAssignDialog by remember { mutableStateOf(false) }
@@ -1128,6 +1203,45 @@ fun ChoreCard(
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+    val assigneeProfilePic = remember(username, userMap) {
+        if (username.isEmpty() || username == "Unassigned" || username == "Unknown User") {
+            "ai_bee"
+        } else {
+            // Try to find the user
+            val userEntry = userMap.entries.firstOrNull {
+                it.value.first.equals(username, ignoreCase = true)
+            }
+
+            userEntry?.value?.second ?: "ai_bee"
+        }
+    }
+
+    // Add these functions after the CooperBt font declaration
+    fun getProfilePicString(resId: Int): String {
+        return when (resId) {
+            R.drawable.profile_happy_bee -> "happy_bee"
+            R.drawable.profile_honey_bee -> "honey_bee"
+            R.drawable.profile_cool_bee -> "cool_bee"
+            R.drawable.profile_heart_bee -> "heart_bee"
+            R.drawable.profile_nerd_bee -> "nerd_bee"
+            R.drawable.profile_guitar_bee -> "guitar_bee"
+            R.drawable.ai_bee -> "ai_bee"
+            else -> "ai_bee"
+        }
+    }
+
+    fun getProfilePicResId(profilePicString: String): Int {
+        return when (profilePicString) {
+            "happy_bee" -> R.drawable.profile_happy_bee
+            "honey_bee" -> R.drawable.profile_honey_bee
+            "cool_bee" -> R.drawable.profile_cool_bee
+            "heart_bee" -> R.drawable.profile_heart_bee
+            "nerd_bee" -> R.drawable.profile_nerd_bee
+            "guitar_bee" -> R.drawable.profile_guitar_bee
+            "ai_bee" -> R.drawable.ai_bee
+            else -> R.drawable.ai_bee
+        }
+    }
 
     // Control shaking effect
     LaunchedEffect(deleteMode) {
@@ -1246,11 +1360,10 @@ fun ChoreCard(
                             .background(MaterialTheme.colorScheme.onPrimary),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "🐝",
-                            color = contentTint,
-                            fontFamily = CooperBt,
-                            fontSize = 26.sp
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = getProfilePicResId(profilePic)),
+                            contentDescription = "Assignee Profile Picture",
+                            modifier = Modifier.size(55.dp)
                         )
                     }
 
