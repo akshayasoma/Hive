@@ -239,6 +239,7 @@ fun AppNavigation(
 
         composable("leaderboard"){
             LeaderboardScreen (
+                groupId = groupId!!,
                 onNavigateToHome = { navController.navigate("home")},
                 darkModeState =  isDarkTheme
             )
