@@ -390,6 +390,52 @@ app.post("/api/group/addGrocery", async (req, res) => {
     }
 });
 
+app.post("/api/group/updateGrocery", async (req, res) => {
+  try {
+    console.log("Trying to update grocery with: ", req.body)
+    const { groupId, deviceId, name, description = "", completed } = req.body;
+
+    // Make sure the right fields are added
+    if (!groupId || !deviceId || !name || typeof completed !== "boolean") {
+      return res.status(400).json({ error: "groupId, deviceId, name, and completed(boolean) are required" });
+    }
+    // Make sure group exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    console.log("GROUP FOUND, AUTH CHECKING FOR GROCERIES")
+    // Make sure user is in group
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    console.log("Trying to find grocery with name: ", name, " description: ", description, " completed: ", completed)
+    // Get the exact grocery from mongo
+    const grocery = group.groceries.find(item =>
+      item.name === name &&
+      item.description === (description ?? "")
+    );
+
+    if (!grocery) {
+      return res.status(404).json({ error: "Grocery item not found" });
+    }
+    console.log("FOUND GROCERY")
+    // Update only the complete status and save
+    grocery.completed = completed;
+
+    await group.save();
+
+    return res.json({
+      message: "Grocery updated",
+      groceries: group.groceries
+    });
+
+  } catch (err) {
+    console.error("UPDATE GROCERY ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 app.post("/api/group/deleteGrocery", async (req, res) => {
   try {
     const { groupId, deviceId, name, description, quantity = 1, completed } = req.body;

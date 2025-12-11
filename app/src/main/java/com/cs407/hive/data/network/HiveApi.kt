@@ -12,6 +12,8 @@ import com.cs407.hive.data.model.GroupResponse
 import com.cs407.hive.data.model.JoinGroupRequest
 import com.cs407.hive.data.model.LeaderboardResponse
 import com.cs407.hive.data.model.LeaveGroupRequest
+import com.cs407.hive.data.model.UpdateGroceryRequest
+import com.cs407.hive.data.model.UpdateGroceryResponse
 import com.cs407.hive.data.model.UpdateGroupNameRequest
 import com.cs407.hive.data.model.UpdateProfilePicRequest
 import com.cs407.hive.data.model.UpdateProfilePicResponse
@@ -72,6 +74,9 @@ interface HiveApi {
 
     @POST("/api/user/updateProfilePic")
     suspend fun updateProfilePic(@Body req: UpdateProfilePicRequest): UpdateProfilePicResponse
+
+    @POST("/api/group/updateGrocery")
+    suspend fun updateGrocery(@Body req: UpdateGroceryRequest): UpdateGroceryResponse
 
 
 

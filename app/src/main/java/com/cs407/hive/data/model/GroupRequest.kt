@@ -175,3 +175,19 @@ data class UpdateProfilePicResponse(
     val message: String,
     val profilePic: String
 )
+
+
+data class UpdateGroceryRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val completed: Boolean
+)
+
+data class UpdateGroceryResponse(
+    val message: String,
+    val groceries: List<GroceryItem>
+)
+
+
