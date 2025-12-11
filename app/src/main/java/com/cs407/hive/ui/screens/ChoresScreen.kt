@@ -223,7 +223,7 @@ fun ChoresScreen(
 
                 if (!uniqueChores.containsKey(key)) {
                     val assigneeUsername = if (chore.assignee.isNotBlank()) {
-                        userMap[chore.assignee] ?: "Unknown User"
+                        chore.assignee ?: "Unknown User"
                     } else {
                         ""
                     }
@@ -288,7 +288,7 @@ fun ChoresScreen(
                     if (!uniqueChores.containsKey(key)) {
                         // Convert assignee to username
                         val assigneeUsername = if (chore.assignee.isNotBlank()) {
-                            userMap[chore.assignee] ?: "Unknown User"
+                            chore.assignee ?: "Unknown User"
                         } else {
                             ""
                         }
