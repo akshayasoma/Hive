@@ -42,7 +42,8 @@ data class UserDetail(
 )
 
 data class UserNamesResponse(
-    val names: List<String>
+    val names: List<String>,
+    val userMap: Map<String, String> = emptyMap()
 )
 
 

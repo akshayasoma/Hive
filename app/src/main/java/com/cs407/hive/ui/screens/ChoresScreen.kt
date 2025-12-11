@@ -159,8 +159,6 @@ fun ChoresScreen(
     }
 
     suspend fun fetchUserNames(): Map<String, String> {
-        val newUserMap = mutableMapOf<String, String>()
-
         try {
             val response = api.getUserNames(
                 GetUserNamesRequest(
@@ -169,31 +167,35 @@ fun ChoresScreen(
                 )
             )
 
-            Log.d("ChoresScreen", "getUserNames API returned names: ${response.names}")
+            Log.d("ChoresScreen", "getUserNames API returned userMap: ${response.userMap}")
 
-            // Get member IDs from group
+            // Use the userMap directly from the response - this properly maps deviceId to username
+            if (response.userMap.isNotEmpty()) {
+                return response.userMap.filterValues { it.isNotBlank() }
+            }
+
+            // Fallback for backwards compatibility if server hasn't been updated
+            Log.w("ChoresScreen", "userMap is empty, falling back to legacy mapping")
             val groupResponse = api.getGroup(mapOf("groupId" to groupId))
             val memberIds = groupResponse.group.peopleList ?: emptyList()
+            val newUserMap = mutableMapOf<String, String>()
 
-            Log.d("ChoresScreen", "Group member IDs: $memberIds")
-
-            memberIds.forEachIndexed { index, deviceId ->
+            memberIds.forEachIndexed { index, memberId ->
                 if (index < response.names.size) {
                     val username = response.names[index]
-                    if (username.isNotBlank()) {  // Only add if username is not empty
-                        newUserMap[deviceId] = username
+                    if (username.isNotBlank()) {
+                        newUserMap[memberId] = username
                     }
                 } else {
-                    // Don't create "User X" names - skip or use device ID
-                    newUserMap[deviceId] = deviceId.takeLast(4) // Optional: use last 4 chars
+                    newUserMap[memberId] = memberId.takeLast(4)
                 }
             }
+            return newUserMap
 
         } catch (e: Exception) {
             Log.e("ChoresScreen", "Error fetching usernames: $e")
+            return emptyMap()
         }
-
-        return newUserMap
     }
 
     // Function to refresh chores and members

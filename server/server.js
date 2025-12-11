@@ -342,16 +342,21 @@ app.post("/api/group/getUserNames", async (req, res) => {
       return res.json({ names: [] });
     }
     console.log("More than 0 people exist!")
-    // Find users and return only their names (_id: 0 comments out the default _id field)
+    // Find users and return their names along with device IDs
     const users = await User.find(
       { userId: { $in: deviceIds } },
-      { name: 1, _id: 0 }
+      { name: 1, userId: 1, _id: 0 }
     );
 
-    // Extract the names into a list and return it
+    // Extract the names into a list and return it (for backwards compatibility)
     const names = users.map(u => u.name);
-    console.log("List of names", names)
-    return res.json({ names });
+    // Also return a map of deviceId -> name for proper mapping
+    const userMap = {};
+    users.forEach(u => {
+      userMap[u.userId] = u.name;
+    });
+    console.log("List of names", names, "userMap", userMap)
+    return res.json({ names, userMap });
   } catch (err) {
     console.error("GET MEMBER NAMES ERROR:", err);
     res.status(500).json({ error: err.message });
