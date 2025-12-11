@@ -80,6 +80,8 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
     )
     var groupIdError by remember { mutableStateOf(false) }
     var userNameError by remember { mutableStateOf(false)}
+    var groupIdBlankError by remember { mutableStateOf(false) }
+    var userNameBlankError by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -116,15 +118,57 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                 BeeAnimation()
             }
 
-            if (userNameError) {
-                Text(
-                    text = "Username too long!",
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    fontFamily = CooperBt
-                )
+            if (userNameBlankError || groupIdBlankError || userNameError || groupIdError) {
+                Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+
+                    if (userNameBlankError && groupIdBlankError){
+                        Text(
+                            text = "Username and GroupId cannot be blank!",
+                            color = Color.Red,
+                            fontSize = 14.sp,
+                            fontFamily = CooperBt
+                        )
+                    }
+                    else {
+                        if (userNameBlankError) {
+                            Text(
+                                text = "Username cannot be blank!",
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                fontFamily = CooperBt
+                            )
+                        }
+
+                        if (userNameError) {
+                            Text(
+                                text = "Username too long!",
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                fontFamily = CooperBt
+                            )
+                        }
+
+                        if (groupIdBlankError) {
+                            Text(
+                                text = "Group ID cannot be blank!",
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                fontFamily = CooperBt
+                            )
+                        }
+
+                        if (groupIdError) {
+                            Text(
+                                text = "Incorrect Group ID!",
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                fontFamily = CooperBt
+                            )
+                        }
+                    }
+                    }
+
+
             }
 
             Surface(
@@ -148,7 +192,7 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                         } else {
                             userNameError = true
                         }
-
+                        userNameBlankError = it.text.isBlank()
                                     },
                     label = {
                         Text(
@@ -179,7 +223,6 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                 )
             }
 
-
             // Group ID TextField
             Surface(
                 modifier = Modifier
@@ -194,7 +237,9 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
             ) {
                 OutlinedTextField(
                     value = groupId,
-                    onValueChange = { groupId = it },
+                    onValueChange = {
+                        groupId = it
+                        groupIdBlankError = it.text.isBlank()},
                     label = {
                         Text(
                             text = stringResource(id = R.string.group_id),
@@ -218,21 +263,6 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
 
 
             }
-
-            if (groupIdError) {
-                Text(
-                    text = "Incorrect Group ID",
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    fontFamily = CooperBt
-                )
-            }
-
-
-
 
             // Spacer
             Spacer(modifier = Modifier.height(10.dp))
@@ -306,7 +336,13 @@ fun JoinScreen(deviceId: String, onNavigateToLogIn: () -> Unit, onNavigateToHome
                     // Save Button
                     Button(
                         onClick = {
+                            userNameBlankError = userName.text.isBlank()
+                            groupIdBlankError = groupId.text.isBlank()
 
+                            // if any validation error exists, stop and show messages
+                            if (userNameBlankError || groupIdBlankError || userNameError) {
+                                return@Button
+                            }
                             scope.launch {
                                 try{
                                     val joinRoom = JoinGroupRequest(

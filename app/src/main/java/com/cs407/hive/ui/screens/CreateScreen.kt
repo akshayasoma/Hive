@@ -124,13 +124,19 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
 
                 if (userNameError || grpNameError) {
                     Text(
-
+                        text = "Username and Group Name cannot be blank!",
+                        color = Color.Red,
+                        fontFamily = CooperBt,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .fillMaxWidth()
                     )
                 }
                 Text(
                     text =
                         when {
-                            if(userNameError && grpNameError) -> "Username and Group Name cannot be blank!"
+                            userNameBlankError && grpNameBlankError -> "Username and Group Name cannot be blank!"
                             userNameBlankError -> "Username cannot be blank!"
                             grpNameBlankError -> "Group Name cannot be blank!"
                             userNameError -> "Username too long!"
