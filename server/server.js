@@ -180,8 +180,13 @@ app.post("/api/groups", async (req, res) => {
         profilePic: "",
       });
 
-      await user.save();
+
+    } else {
+        user.name = creatorName;
+        user.points = 0;
     }
+
+    await user.save();
 
     // Optionally: check if user already has a group
     const existingGroup = await Group.findOne({ peopleList: creatorId });
@@ -230,8 +235,13 @@ app.post("/api/group/join", async (req, res) => {
         points: 0,
         profilePic: "",
       });
-      await user.save();
+
+    } else{
+        user.name = userName;
+        user.points = 0;
     }
+
+    await user.save();
 
     // Add user to this group's peopleList if not already present
     if (!group.peopleList.includes(deviceId)) {
