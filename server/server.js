@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 // connect to MongoDB Atlas
+console.log(process.env.MONGO_URI)
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -60,7 +61,7 @@ const userSchema = new mongoose.Schema({
            type: Number,
            default: 0
          },
-  profilePicture: {
+  profilePic: {
                type: String,
                default: ""
              },
@@ -162,6 +163,7 @@ app.post("/api/group/leave", async (req, res) => {
 app.post("/api/groups", async (req, res) => {
   try {
     const { groupName, creatorName, groupId, creatorId } = req.body;
+    console.log("Request:",groupName, creatorName, groupId, creatorId)
 //    if (!peopleList || peopleList.length === 0) {
 //          return res.status(400).json({ error: "peopleList (deviceId) required" });
 //    }
@@ -175,11 +177,16 @@ app.post("/api/groups", async (req, res) => {
         userId: creatorId,
         name: creatorName,
         points: 0,
-        profilePicture: "",
+        profilePic: "",
       });
 
-      await user.save();
+
+    } else {
+        user.name = creatorName;
+        user.points = 0;
     }
+
+    await user.save();
 
     // Optionally: check if user already has a group
     const existingGroup = await Group.findOne({ peopleList: creatorId });
@@ -226,10 +233,15 @@ app.post("/api/group/join", async (req, res) => {
         userId: deviceId,
         name: userName,
         points: 0,
-        profilePicture: "",
+        profilePic: "",
       });
-      await user.save();
+
+    } else{
+        user.name = userName;
+        user.points = 0;
     }
+
+    await user.save();
 
     // Add user to this group's peopleList if not already present
     if (!group.peopleList.includes(deviceId)) {
@@ -256,6 +268,94 @@ app.post("/api/user/get", async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.post("/api/group/leaderboard", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+
+    // Make sure groupid exists
+    if (!groupId) {
+      return res.status(400).json({ error: "groupId required" });
+    }
+
+    // Get the group
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Auth check
+    if (!group.peopleList.includes(deviceId)) {
+        return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    // Extract all userIds from peopleList
+    const deviceIds = group.peopleList;
+
+    // Get all users in the group
+    const users = await User.find(
+      { userId: { $in: deviceIds } },   // filter
+      { name: 1, points: 1, _id: 1 }    // select fields
+    ).sort({
+      points: -1,  // higher points first
+      _id: 1       // stable tie-breaker
+    });
+    // Create the leaderboard. Users already sorted.
+    const leaderboard = users.map(u => ({
+      name: u.name,
+      points: u.points
+    }));
+    // Return the leaderboard
+    res.json({ leaderboard });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/getUserNames", async (req, res) => {
+  try {
+    const { groupId, deviceId } = req.body;
+    console.log("Get group user names with groupId: ", groupId)
+
+
+    // Make sure the group id is valid
+    if (!groupId) {
+      return res.status(400).json({ error: "groupId is required" });
+    }
+    console.log("Finding group")
+    // Make sure it exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    console.log("Group Exists, getting deviceid")
+
+    // AUTH CHECK
+    if (!group.peopleList.includes(deviceId)) {
+        return res.status(403).json({ error: "User not authorized for this group" });
+    }
+
+    // Get device IDs from the peopleList
+    const deviceIds = group.peopleList;
+
+    // Make sure people actually exist in the hive
+    if (!deviceIds || deviceIds.length === 0) {
+      return res.json({ names: [] });
+    }
+    console.log("More than 0 people exist!")
+    // Find users and return only their names (_id: 0 comments out the default _id field)
+    const users = await User.find(
+      { userId: { $in: deviceIds } },
+      { name: 1, _id: 0 }
+    );
+
+    // Extract the names into a list and return it
+    const names = users.map(u => u.name);
+    console.log("List of names", names)
+    return res.json({ names });
+  } catch (err) {
+    console.error("GET MEMBER NAMES ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/api/group/get", async (req, res) => {
@@ -299,6 +399,52 @@ app.post("/api/group/addGrocery", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.post("/api/group/updateGrocery", async (req, res) => {
+  try {
+    console.log("Trying to update grocery with: ", req.body)
+    const { groupId, deviceId, name, description = "", completed } = req.body;
+
+    // Make sure the right fields are added
+    if (!groupId || !deviceId || !name || typeof completed !== "boolean") {
+      return res.status(400).json({ error: "groupId, deviceId, name, and completed(boolean) are required" });
+    }
+    // Make sure group exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    console.log("GROUP FOUND, AUTH CHECKING FOR GROCERIES")
+    // Make sure user is in group
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    console.log("Trying to find grocery with name: ", name, " description: ", description, " completed: ", completed)
+    // Get the exact grocery from mongo
+    const grocery = group.groceries.find(item =>
+      item.name === name &&
+      item.description === (description ?? "")
+    );
+
+    if (!grocery) {
+      return res.status(404).json({ error: "Grocery item not found" });
+    }
+    console.log("FOUND GROCERY")
+    // Update only the complete status and save
+    grocery.completed = completed;
+
+    await group.save();
+
+    return res.json({
+      message: "Grocery updated",
+      groceries: group.groceries
+    });
+
+  } catch (err) {
+    console.error("UPDATE GROCERY ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 app.post("/api/group/deleteGrocery", async (req, res) => {
   try {
@@ -437,6 +583,154 @@ app.post("/api/user/completeChore", async (req, res) => {
   }
 });
 
+app.post("/api/group/updateChoreAssignee", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description = "", points, newAssignee } = req.body;
+    console.log("Updating Chore Assignee with: ", groupId, deviceId, choreName, description, points, newAssignee)
+    // Validate input
+    if (!groupId || !deviceId || !choreName || points === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Make sure gorup exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Make sure user belongs in group
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Find chore, uniqueness is defined by name, desc, points
+    const chore = group.chores.find(c =>
+      c.name === choreName &&
+      c.description === description &&
+      c.points === points
+    );
+    console.log("Chore found: ", chore)
+    if (!chore)
+      return res.status(404).json({ error: "Chore not found" });
+
+    // Update assignee and save
+    chore.assignee = newAssignee;
+    console.log("updated chore: ", chore)
+//    await chore.save();
+//    console.log("saved chore")
+
+    await group.save();
+    console.log("Saved")
+
+    return res.json({
+      message: "Chore assignee updated",
+      chores: group.chores
+    });
+  } catch (err) {
+    console.error("UPDATE ASSIGNEE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/updateChoreStatus", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description = "", points, newStatus } = req.body;
+    // Make sure right parameters are passed in
+    console.log("Updating Chore Status with: ", groupId, deviceId, choreName, description, points, newStatus)
+    if (!groupId || !deviceId || !choreName || points === undefined || newStatus === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    // Ensure group exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    // AUTH CHECK FOR DEVICE
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    // Find the chore
+    const chore = group.chores.find(c =>
+      c.name === choreName &&
+      c.description === description &&
+      c.points === points
+    );
+
+    if (!chore) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    // update status of the chore and save
+    chore.status = newStatus;
+
+    await group.save();
+
+    return res.json({
+      message: "Chore status updated",
+      chores: group.chores
+    });
+
+  } catch (err) {
+    console.error("UPDATE STATUS ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/updateChore", async (req, res) => {
+  try {
+    const { groupId, deviceId, name, description = "", points, newAssignee, newStatus } = req.body;
+
+    console.log("Updating chore with:", groupId, deviceId, name, description, points, newAssignee, newStatus);
+
+    // Make sure it valid request
+    if (!groupId || !deviceId || !name || points === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (newStatus < 0 || newStatus > 2 || !Number.isInteger(newStatus)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    // Make sure group exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Auth check on deviceID
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Find the chore by unique field
+    const chore = group.chores.find(c =>
+      c.name === name &&
+      c.description === description &&
+      c.points === points
+    );
+
+    if (!chore) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    console.log("Found chore:", chore);
+
+    // Apply updates and save
+    chore.assignee = newAssignee;
+    chore.status = newStatus;
+
+    console.log("Updated chore:", chore);
+
+    // Save group
+    await group.save();
+
+    return res.json({
+      message: "Chore updated successfully",
+      chores: group.chores
+    });
+
+  } catch (err) {
+    console.error("UPDATE CHORE ERROR:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 app.post("/api/group/deleteChore", async (req, res) => {
   try {
     const { groupId, deviceId, choreName, description, points, status, assignee } = req.body;
@@ -484,6 +778,34 @@ app.post("/api/group/deleteChore", async (req, res) => {
   }
 });
 
+
+app.post("/api/user/updateProfilePic", async (req, res) => {
+  try {
+    const { deviceId, profilePic } = req.body;
+    console.log("Updating profile picture with deviceId: ", deviceId, " profilePic: ", profilePic);
+    // Make sure valid request
+    if (!deviceId || typeof profilePic !== "string") {
+      return res.status(400).json({ error: "deviceId and profilePic are required" });
+    }
+
+    // Make sure user exists
+    const user = await User.findOne({ userId: deviceId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Update profile picture and save
+    user.profilePic = profilePic;
+    await user.save();
+
+    return res.json({
+      message: "Profile picture updated successfully",
+      profilePic: user.profilePic
+    });
+
+  } catch (err) {
+    console.error("PROFILE PIC UPDATE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.post("/api/group/updateName", async (req, res) => {
     try {

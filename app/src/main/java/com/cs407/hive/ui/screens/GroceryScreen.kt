@@ -69,6 +69,8 @@ import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.DeleteGroceryRequest
 import com.cs407.hive.data.model.UiChore
 import com.cs407.hive.data.model.UiGrocery
+import com.cs407.hive.data.model.UpdateGroceryRequest
+import com.cs407.hive.data.model.UpdateProfilePicRequest
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.ui.theme.HiveTheme
 import com.cs407.hive.workers.WorkerTestUtils
@@ -178,7 +180,32 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                 horizontalArrangement = Arrangement.Start
             ) {
                 Button(
-                    onClick = { showInfo = !showInfo },
+                    onClick = {
+                        showInfo = !showInfo
+                        scope.launch {
+                            try{
+                                val req = UpdateGroceryRequest(
+                                    groupId = groupId,
+                                    deviceId = deviceId,
+                                    name = "Carrotto",
+                                    description = "Orango",
+                                    completed = true
+                                )
+
+                                val response = api.updateGrocery(req)
+
+                                Log.d("GroceryScreen", "Updated list: ${response.groceries}")
+
+
+                            }
+                            catch(e: Exception){
+                                e.printStackTrace()
+                                Log.e("ChoresScreen", "Error loading data: $e")
+                            }
+                        }
+
+
+                              },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -259,6 +286,37 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
 
                                 }
                             },
+                            onToggleCompleted = { newValue ->
+
+                                scope.launch {
+                                    try {
+                                        val req = UpdateGroceryRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = grocery.name,
+                                            description = grocery.description,
+                                            completed = newValue          // NOT HARDCODED
+                                        )
+
+                                        api.updateGrocery(req)
+
+                                        // Reload list
+                                        val updated = api.getGroup(mapOf("groupId" to groupId))
+                                        groceries = updated.group.groceries?.map {
+                                            UiGrocery(
+                                                name = it.name,
+                                                description = it.description,
+                                                completed = it.completed
+                                            )
+                                        } ?: emptyList()
+
+                                    } catch (e: Exception) {
+                                        Log.e("GroceryScreen", "Toggle error: $e")
+                                        toastMessage = "Failed to update grocery"
+                                    }
+                                }
+
+                            },
                             darkModeState = darkModeState
 
                         )
@@ -303,6 +361,37 @@ fun GroceryScreen(deviceId: String, groupId: String, onNavigateToHome: () -> Uni
                                     }
 
                                 }
+                            },
+                            onToggleCompleted = { newValue ->
+
+                                scope.launch {
+                                    try {
+                                        val req = UpdateGroceryRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = grocery.name,
+                                            description = grocery.description,
+                                            completed = newValue          // NOT HARDCODED
+                                        )
+
+                                        api.updateGrocery(req)
+
+                                        // Reload list
+                                        val updated = api.getGroup(mapOf("groupId" to groupId))
+                                        groceries = updated.group.groceries?.map {
+                                            UiGrocery(
+                                                name = it.name,
+                                                description = it.description,
+                                                completed = it.completed
+                                            )
+                                        } ?: emptyList()
+
+                                    } catch (e: Exception) {
+                                        Log.e("GroceryScreen", "Toggle error: $e")
+                                        toastMessage = "Failed to update grocery"
+                                    }
+                                }
+
                             },
                             darkModeState = darkModeState
                         )
@@ -752,6 +841,7 @@ fun GroceryCard(
     description: String,
     deleteMode: Boolean,
     onDelete: () -> Unit,
+    onToggleCompleted: (Boolean) -> Unit,
     darkModeState : Boolean
 ) {
     var isChecked by remember { mutableStateOf(status) }
@@ -896,7 +986,11 @@ fun GroceryCard(
                 // Checkbox
                 Checkbox(
                     checked = isChecked,
-                    onCheckedChange = { isChecked = it },
+//                    onCheckedChange = { isChecked = it },
+                    onCheckedChange = { newValue ->
+                        isChecked = newValue
+                        onToggleCompleted(newValue)        // TRIGGER API UPDATE
+                    },
                     colors = CheckboxDefaults.colors(
                         checkedColor = contentTint,
                         uncheckedColor = contentTint,

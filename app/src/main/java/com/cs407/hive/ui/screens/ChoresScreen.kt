@@ -1,8 +1,5 @@
 package com.cs407.hive.ui.screens
 
-import android.R.attr.name
-import android.content.res.Configuration.UI_MODE_NIGHT_NO
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -19,7 +16,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,13 +26,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,6 +46,7 @@ import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -60,20 +54,23 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.hive.R
 import com.cs407.hive.data.model.AddChoreRequest
+import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
+import com.cs407.hive.data.model.GetUserNamesRequest
 import com.cs407.hive.data.model.UiChore
+import com.cs407.hive.data.model.UpdateChoreAssigneeRequest
+import com.cs407.hive.data.model.UpdateChoreRequest
+import com.cs407.hive.data.model.UpdateProfilePicRequest
 import com.cs407.hive.data.network.ApiClient
-import com.cs407.hive.data.network.HiveApi
-import com.cs407.hive.ui.theme.HiveTheme
 import com.cs407.hive.workers.WorkerTestUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -81,15 +78,20 @@ import kotlin.math.roundToInt
 
 
 @Composable
-fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,darkModeState: Boolean) {
+fun ChoresScreen(
+    deviceId: String,
+    groupId: String,
+    onNavigateToHome: () -> Unit,
+    darkModeState: Boolean
+) {
     var showDialog by remember { mutableStateOf(false) }
     var choreName by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-//    var chores by remember { mutableStateOf(listOf<Triple<String, String, String>>()) }
     var chores by remember { mutableStateOf(listOf<UiChore>()) }
     var showInfo by remember { mutableStateOf(false) }
     var deleteMode by remember { mutableStateOf(false) }
+    var groupMembers by remember { mutableStateOf<List<String>>(emptyList()) }
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
@@ -99,13 +101,12 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
     var descriptionError by remember { mutableStateOf<String?>(null) }
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val api = remember { ApiClient.instance }
     val scope = rememberCoroutineScope()
-
-    // Keyboard configuration for points field
-    val keyboardController = LocalSoftwareKeyboardController.current
+    var userMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     // Validation functions
     fun validateChoreName(): Boolean {
@@ -157,6 +158,99 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
         return nameValid && pointsValid && descValid
     }
 
+    suspend fun fetchUserNames(): Map<String, String> {
+        val newUserMap = mutableMapOf<String, String>()
+
+        try {
+            val response = api.getUserNames(
+                GetUserNamesRequest(
+                    groupId = groupId,
+                    deviceId = deviceId
+                )
+            )
+
+            Log.d("ChoresScreen", "getUserNames API returned names: ${response.names}")
+
+            // Get member IDs from group
+            val groupResponse = api.getGroup(mapOf("groupId" to groupId))
+            val memberIds = groupResponse.group.peopleList ?: emptyList()
+
+            Log.d("ChoresScreen", "Group member IDs: $memberIds")
+
+            memberIds.forEachIndexed { index, deviceId ->
+                if (index < response.names.size) {
+                    val username = response.names[index]
+                    if (username.isNotBlank()) {  // Only add if username is not empty
+                        newUserMap[deviceId] = username
+                    }
+                } else {
+                    // Don't create "User X" names - skip or use device ID
+                    newUserMap[deviceId] = deviceId.takeLast(4) // Optional: use last 4 chars
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.e("ChoresScreen", "Error fetching usernames: $e")
+        }
+
+        return newUserMap
+    }
+
+    // Function to refresh chores and members
+    suspend fun refreshChoresAndMembers() {
+        try {
+            val response = api.getGroup(mapOf("groupId" to groupId))
+            val serverChores = response.group.chores ?: emptyList()
+            val memberIds = response.group.peopleList ?: emptyList()
+
+            Log.d("ChoresScreen", "Group member IDs: $memberIds")
+
+            // Fetch usernames for all member IDs
+            val fetchedUserMap = fetchUserNames()
+            userMap = fetchedUserMap
+
+            // Create a list of usernames
+            groupMembers = fetchedUserMap.values.toList().filter { it.isNotBlank() }.distinct()
+
+            Log.d("ChoresScreen", "Group members (usernames): $groupMembers")
+
+            val uniqueChores = mutableMapOf<String, UiChore>()
+
+            serverChores.forEach { chore ->
+                val normalizedName = chore.name.trim().lowercase()
+                val normalizedDesc = chore.description.trim().lowercase()
+                val key = "$normalizedName|$normalizedDesc"
+
+                if (!uniqueChores.containsKey(key)) {
+                    val assigneeUsername = if (chore.assignee.isNotBlank()) {
+                        userMap[chore.assignee] ?: "Unknown User"
+                    } else {
+                        ""
+                    }
+
+                    uniqueChores[key] = UiChore(
+                        name = chore.name.trim(),
+                        description = chore.description.trim(),
+                        points = chore.points,
+                        status = chore.status,
+                        assignee = assigneeUsername,
+                        profilePic = ""
+                    )
+                } else {
+                    Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
+                }
+            }
+
+            chores = uniqueChores.values.toList()
+            Log.d("ChoresScreen", "Loaded ${chores.size} chores with usernames")
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("ChoresScreen", "Error loading data: $e")
+            toastMessage = "Failed to load data: ${e.message}"
+        }
+    }
+
     LaunchedEffect(toastMessage) {
         if (toastMessage != null) {
             Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
@@ -166,24 +260,60 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
 
     LaunchedEffect(Unit) {
         scope.launch {
+            isLoading = true
             try {
                 val response = api.getGroup(mapOf("groupId" to groupId))
                 val serverChores = response.group.chores ?: emptyList()
+                val memberIds = response.group.peopleList ?: emptyList()
 
-//                chores = serverChores.map { chore ->
-//                    Triple(chore.name, chore.points.toString(), chore.description)
-//                }
-                chores = serverChores.map { chore ->
-                    UiChore(
-                        name = chore.name,
-                        description = chore.description,
-                        points = chore.points,
-                        status = chore.status,
-                        assignee = chore.assignee
-                    )
+                Log.d("ChoresScreen", "Initial load - member IDs: $memberIds")
+
+                // Fetch usernames
+                val fetchedUserMap = fetchUserNames()
+                userMap = fetchedUserMap
+
+                // Create username list
+                groupMembers = fetchedUserMap.values.toList().filter { it.isNotBlank() }.distinct()
+
+                Log.d("ChoresScreen", "Initial load - usernames: $groupMembers")
+
+                val uniqueChores = mutableMapOf<String, UiChore>()
+
+                serverChores.forEach { chore ->
+                    // Create a normalized key (case-insensitive, trimmed)
+                    val normalizedName = chore.name.trim().lowercase()
+                    val normalizedDesc = chore.description.trim().lowercase()
+                    val key = "$normalizedName|$normalizedDesc"
+
+                    if (!uniqueChores.containsKey(key)) {
+                        // Convert assignee to username
+                        val assigneeUsername = if (chore.assignee.isNotBlank()) {
+                            userMap[chore.assignee] ?: "Unknown User"
+                        } else {
+                            ""
+                        }
+
+                        uniqueChores[key] = UiChore(
+                            name = chore.name.trim(),
+                            description = chore.description.trim(),
+                            points = chore.points,
+                            status = chore.status,
+                            assignee = assigneeUsername,
+                            profilePic = ""
+                        )
+                    } else {
+                        Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
+                    }
                 }
+
+                chores = uniqueChores.values.toList()
+                Log.d("ChoresScreen", "Initial load - loaded ${chores.size} chores")
+
             } catch (e: Exception) {
                 e.printStackTrace()
+                toastMessage = "Failed to load data: ${e.message}"
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -214,7 +344,24 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                 horizontalArrangement = Arrangement.Start
             ) {
                 Button(
-                    onClick = { showInfo = !showInfo },
+                    onClick = { showInfo = !showInfo
+                        scope.launch {
+                            try{
+                                val req = UpdateProfilePicRequest(
+                                    deviceId = deviceId,
+                                    profilePic = "imageUrlTest2.0"
+                                )
+                                val response = api.updateProfilePic(req)
+                                Log.d("SettingsScreen", "Updated pic: ${response.profilePic}")
+
+
+                            }
+                            catch(e: Exception){
+                                e.printStackTrace()
+                                Log.e("ChoresScreen", "Error loading data: $e")
+                            }
+                        }
+                    },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -237,7 +384,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
             // Header
             Text(
                 text = "CHORES",
-                fontFamily = CooperBt, //font added
+                fontFamily = CooperBt,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondary
@@ -245,114 +392,262 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(bottom = 100.dp)
-            ) {
-                if (chores.isNotEmpty()) {
-                    items(
-                        items=chores.reversed(),
-                        key={chore -> "${chore.name}/${chore.points}/${chore.description}/${chore.status}/${chore.assignee}"}
-                    ) { chore ->
-                        Log.d("ChoresScreen", "Chore: ${chore.name}, Points: ${chore.points}, Description: ${chore.description}")
-                        ChoreCard(
-                            username = chore.assignee.ifBlank { "Unassigned" },
-                            chore = chore.name,
-                            points = "${chore.points} pts",
-                            status = when (chore.status) {
-                                0 -> "To do"
-                                1 -> "In progress"
-                                2 -> "Done"
-                                else -> "Unknown"
-                            },
-                            description = chore.description,
-                            deleteMode = deleteMode,
-                            onDelete = {
-                                //TODO: Delete the Chore in db
-                                scope.launch {
-                                    try{
-                                        val deleteChore = DeleteChoreRequest(
-                                            groupId = groupId,
-                                            deviceId = deviceId,
-                                            choreName = chore.name,
-                                            description = chore.description,
-                                            points = chore.points,
-                                            status = chore.status,
-                                            assignee = chore.assignee
-                                        )
-                                        api.deleteChore(deleteChore)
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onSecondary
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(bottom = 100.dp)
+                ) {
+                    if (chores.isNotEmpty()) {
+                        items(
+                            items = chores.reversed(),
+                            key = { chore ->
+                                // Use normalized key to match deduplication logic
+                                "${chore.name.trim().lowercase()}|${chore.description.trim().lowercase()}"
+                            }
+                        ) { chore ->
+                            val currentChore by rememberUpdatedState(chore)
 
-                                        val updatedResponse = api.getGroup(mapOf("groupId" to groupId))
-                                        val updatedChores = updatedResponse.group.chores ?: emptyList()
-
-                                        chores = updatedChores.map {
-                                            UiChore(
-                                                name = it.name,
-                                                description = it.description,
-                                                points = it.points,
-                                                status = it.status,
-                                                assignee = it.assignee
+                            ChoreCard(
+                                username = currentChore.assignee.ifBlank { "Unassigned" },
+                                chore = currentChore.name,
+                                points = "${currentChore.points} pts",
+                                status = when (currentChore.status) {
+                                    0 -> "To do"
+                                    1 -> "In progress"
+                                    2 -> "Completed"
+                                    else -> "Unknown"
+                                },
+                                description = currentChore.description,
+                                deleteMode = deleteMode,
+                                onDelete = {
+                                    scope.launch {
+                                        try {
+                                            val deleteChore = DeleteChoreRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                choreName = currentChore.name,
+                                                description = currentChore.description,
+                                                points = currentChore.points,
+                                                status = currentChore.status,
+                                                assignee = currentChore.assignee
                                             )
-                                        }
 
-                                        Log.d("ChoresScreen", "Chore successfully deleted: ${chore.name}")
-                                    }
-                                    catch(e: Exception){
-                                        Log.e("ChoresScreen", "Error deleting chore: $e")
-                                    }
+                                            api.deleteChore(deleteChore)
 
-                                }
-                            },
-                            groupMembers = listOf("User1", "User2", "User3"), // Replace with actual group members
-                            onAssignUser = { assignedUser: String ->
-                                scope.launch {
-                                    try {
-                                        if (assignedUser.isEmpty()) {
-                                            // Keep as Unassigned
-                                            toastMessage = "Chore '$name' is unassigned"
-                                        } else {
-                                            toastMessage = "Assigned $name to $assignedUser"
+                                            // Remove by unique key instead of comparing all fields
+                                            chores = chores.filterNot {
+                                                "${it.name}|${it.description}|${it.assignee}" ==
+                                                        "${currentChore.name}|${currentChore.description}|${currentChore.assignee}"
+                                            }
+
+                                            toastMessage = "Chore '${currentChore.name}' deleted"
+
+                                        } catch (e: Exception) {
+                                            Log.e("ChoresScreen", "Error deleting chore: $e")
+                                            toastMessage = "Failed to delete chore: ${e.message}"
+                                            // Refresh from server on error
+                                            refreshChoresAndMembers()
                                         }
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                        toastMessage = "Failed to assign user: ${e.message}"
                                     }
-                                }
-                            },
-                            onChangeStatus = { newStatus: String ->
-                                scope.launch {
-                                    try {
-                                        val statusInt = when (newStatus) {
-                                            "To do" -> 0
-                                            "In progress" -> 1
-                                            "Completed" -> 2
-                                            else -> 0
+                                },
+                                groupMembers = groupMembers,
+                                onAssignUser = { assignedUsername: String ->
+                                    Log.d("ChoreScreen", "Assign clicked. username=$assignedUsername")
+                                    scope.launch {
+                                        try {
+                                            // Convert username back to device ID for the API
+                                            val assignedDeviceId = userMap.entries
+                                                .firstOrNull { it.value == assignedUsername }?.key ?: ""
+
+                                            val updateRequest = UpdateChoreAssigneeRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                choreName = currentChore.name,
+                                                description = currentChore.description,
+                                                points = currentChore.points,
+                                                newAssignee = assignedDeviceId
+                                            )
+
+                                            val response = api.updateChoreAssignee(updateRequest)
+
+
+                                            // Update local state with username
+//                                            chores = chores.map { c ->
+//                                                if (c.name == currentChore.name &&
+//                                                    c.description == currentChore.description &&
+//                                                    c.assignee == currentChore.assignee) {
+//                                                    c.copy(assignee = assignedUsername)
+//                                                } else c
+//                                            }
+                                            chores = response.chores.map { c ->
+                                                UiChore(
+                                                    name = c.name,
+                                                    description = c.description,
+                                                    points = c.points,
+                                                    status = c.status,
+                                                    assignee = c.assignee,
+                                                    profilePic = ""
+                                                )
+                                            }
+
+
+
+                                            toastMessage = if (assignedUsername.isEmpty() || assignedUsername == "Unassigned") {
+                                                "Chore '${currentChore.name}' is unassigned"
+                                            } else {
+                                                "Assigned ${currentChore.name} to $assignedUsername"
+                                            }
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                            toastMessage = "Failed to assign user: ${e.message}"
                                         }
-                                        toastMessage = "Updated $name status to $newStatus"
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                        toastMessage = "Failed to update status: ${e.message}"
                                     }
-                                }
-                            },
-                            darkModeState = darkModeState
-                        )
-                    }
-                } else {
-                    item {
-                        Text(
-                            text = "No chores yet! Add chores using the button below!",
-                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Bold,
-                            fontStyle = FontStyle.Italic,
-                            modifier = Modifier.padding(32.dp)
-                        )
+                                },
+                                onChangeStatus = { newStatus: String ->
+                                    Log.d("ChoreScreen", "Assign clicked. newStatus=$newStatus")
+                                    scope.launch {
+                                        try {
+                                            val statusInt = when (newStatus) {
+                                                "To do" -> 0
+                                                "In progress" -> 1
+                                                "Completed" -> 2
+                                                else -> 0
+                                            }
+
+                                            val updateRequest = AddChoreRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                name = currentChore.name,
+                                                description = currentChore.description,
+                                                points = currentChore.points,
+                                                assignee = currentChore.assignee,
+                                                status = statusInt
+                                            )
+
+                                            api.addChore(updateRequest)
+
+                                            if (statusInt == 2 && currentChore.assignee.isNotBlank() && currentChore.assignee != "Unassigned") {
+                                                try {
+                                                    val assignedDeviceId = userMap.entries
+                                                        .firstOrNull { it.value == currentChore.assignee }?.key
+                                                        ?: ""
+
+                                                    if (assignedDeviceId.isNotBlank()) {
+                                                        val completeRequest = CompleteChoreRequest(
+                                                            groupId = groupId,
+                                                            deviceId = assignedDeviceId,
+                                                            choreName = currentChore.name,
+                                                            description = currentChore.description,
+                                                            points = currentChore.points
+                                                        )
+
+                                                        api.completeChore(completeRequest)
+
+                                                        val userResponse = api.getUser(mapOf("deviceId" to assignedDeviceId))
+                                                        val newUserPoints = userResponse.user.points
+
+                                                        toastMessage = "Updated ${currentChore.name} status to $newStatus. " +
+                                                                "${currentChore.assignee} now has $newUserPoints points!"
+                                                    } else {
+                                                        toastMessage = "Updated ${currentChore.name} status to $newStatus"
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Log.e("ChoresScreen", "Error updating points via completeChore: $e")
+                                                    toastMessage = "Updated ${currentChore.name} status to $newStatus (points update failed)"
+                                                }
+                                            } else {
+                                                toastMessage = "Updated ${currentChore.name} status to $newStatus"
+                                            }
+
+                                            chores = chores.map { c ->
+                                                if (c.name == currentChore.name &&
+                                                    c.description == currentChore.description &&
+                                                    c.assignee == currentChore.assignee) {
+                                                    c.copy(status = statusInt)
+                                                } else c
+                                            }
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                            toastMessage = "Failed to update status: ${e.message}"
+                                        }
+                                    }
+                                },
+                                onSubmitChoreChange = {newAssignee: String, newStatus: String ->
+                                    scope.launch {
+                                        try {
+                                            val statusInt = when (newStatus) {
+                                                "To do" -> 0
+                                                "In progress" -> 1
+                                                "Completed" -> 2
+                                                else -> 0
+                                            }
+                                            val request = UpdateChoreRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                name = currentChore.name,
+                                                description = currentChore.description,
+                                                points = currentChore.points,
+                                                newAssignee = newAssignee,
+                                                newStatus = statusInt
+                                            )
+
+                                            api.updateChore(request)
+
+                                            chores = chores.map { c ->
+                                                if (c.name == currentChore.name &&
+                                                    c.description == currentChore.description &&
+                                                    c.points == currentChore.points
+                                                ) {
+                                                    c.copy(assignee = newAssignee, status = statusInt)
+                                                } else c
+                                            }
+
+                                        } catch (e: Exception) {
+                                            Log.e("ChoreScreen", "Update failed", e)
+                                        }
+                                    }
+                                },
+                                darkModeState = darkModeState
+                            )
+                        }
+                    } else {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "No chores yet!",
+                                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    fontSize = 18.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Add chores using the + button below!",
+                                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.5f),
+                                    fontStyle = FontStyle.Italic,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
                     }
                 }
             }
-
         }
 
         BottomAppBar(
@@ -372,7 +667,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = if (deleteMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimary
                     ),
                     modifier = Modifier.size(60.dp)
                 ) {
@@ -381,7 +676,6 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                         contentDescription = "Delete",
                         tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(50.dp)
-
                     )
                 }
 
@@ -400,7 +694,6 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                         contentDescription = "Home Screen",
                         tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(50.dp)
-
                     )
                 }
 
@@ -410,7 +703,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                         choreNameError = null
                         pointsError = null
                         descriptionError = null
-                        showDialog = true },
+                        showDialog = true
+                    },
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -427,34 +721,31 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                 }
             }
         }
+
         if (showDialog) {
             val textColor = if (darkModeState) {
                 MaterialTheme.colorScheme.onTertiary
             } else {
                 MaterialTheme.colorScheme.onSecondary
             }
-            val borderColor = if (darkModeState) {
-                Color.LightGray
-            } else {
-                Color.DarkGray
-            }
+            val errorColor = if (darkModeState) Color.Red else MaterialTheme.colorScheme.error
+
             AlertDialog(
                 onDismissRequest = {
                     choreNameError = null
                     descriptionError = null
-                    showDialog = false },
+                    showDialog = false
+                },
                 title = {
                     Text(
                         "Add a New Chore",
-                        fontFamily = CooperBt, //font added
+                        fontFamily = CooperBt,
                         color = MaterialTheme.colorScheme.onSecondary
                     )
                 },
-
                 text = {
                     Column {
                         // Chore Name Field with Error
-                        val errorColor = if (darkModeState) Color.Red else MaterialTheme.colorScheme.error
                         if (choreNameError != null) {
                             Text(
                                 text = choreNameError!!,
@@ -470,10 +761,15 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             onValueChange = { newValue ->
                                 choreName = newValue.take(31)
                                 validateChoreName()
-                                            },
-                            label = { Text("Chore Name",
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic, color = textColor) }, //font added
+                            },
+                            label = {
+                                Text(
+                                    "Chore Name",
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             isError = choreNameError != null,
@@ -489,8 +785,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = textColor,
                                 unfocusedTextColor = textColor,
-                                focusedBorderColor = Color.DarkGray,
-                                unfocusedBorderColor = Color.DarkGray,
+                                focusedBorderColor = if (darkModeState) Color.LightGray else Color.DarkGray,
+                                unfocusedBorderColor = if (darkModeState) Color.LightGray else Color.DarkGray,
                                 errorBorderColor = Color.Red
                             ),
                         )
@@ -515,9 +811,15 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                                     points = newValue
                                 }
                                 validatePoints()
-                                            },
-                            label = { Text("Points", fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic, color = textColor) }, //font added
+                            },
+                            label = {
+                                Text(
+                                    "Points",
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             isError = pointsError != null,
@@ -533,11 +835,10 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = textColor,
                                 unfocusedTextColor = textColor,
-                                focusedBorderColor = Color.DarkGray,
-                                unfocusedBorderColor = Color.DarkGray,
+                                focusedBorderColor = if (darkModeState) Color.LightGray else Color.DarkGray,
+                                unfocusedBorderColor = if (darkModeState) Color.LightGray else Color.DarkGray,
                                 errorBorderColor = Color.Red
                             ),
-                            // Set keyboard to number pad
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Number,
                                 imeAction = ImeAction.Next
@@ -562,10 +863,15 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             onValueChange = { newValue ->
                                 description = newValue.take(51)
                                 validateDescription()
-                                            },
-                            label = { Text("Description",
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic, color = textColor) }, //font added
+                            },
+                            label = {
+                                Text(
+                                    "Description",
+                                    fontWeight = FontWeight.Bold,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor
+                                )
+                            },
                             singleLine = false,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -583,8 +889,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = textColor,
                                 unfocusedTextColor = textColor,
-                                focusedBorderColor = Color.DarkGray,
-                                unfocusedBorderColor = Color.DarkGray,
+                                focusedBorderColor = if (darkModeState) Color.LightGray else Color.DarkGray,
+                                unfocusedBorderColor = if (darkModeState) Color.LightGray else Color.DarkGray,
                                 errorBorderColor = Color.Red
                             ),
                         )
@@ -597,106 +903,89 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                         MaterialTheme.colorScheme.onTertiary
                     }
 
-                    val textColor = if (darkModeState) {
-                        MaterialTheme.colorScheme.onSecondary
-                    } else {
-                        MaterialTheme.colorScheme.onSecondary
-                    }
-                    TextButton(onClick = {
-                        // Clear previous errors first
-                        choreNameError = null
-                        pointsError = null
-                        descriptionError = null
+                    val confirmTextColor = MaterialTheme.colorScheme.onSecondary
 
-                        // Run all validations
-                        val nameValid = validateChoreName()
-                        val pointsValid = validatePoints()
-                        val descValid = validateDescription()
+                    TextButton(
+                        onClick = {
+                            choreNameError = null
+                            pointsError = null
+                            descriptionError = null
 
-                        val allValid = nameValid && pointsValid && descValid
+                            val nameValid = validateChoreName()
+                            val pointsValid = validatePoints()
+                            val descValid = validateDescription()
 
-                        if (allValid) {
-                                if (choreName.isNotBlank() && points.isNotBlank()) {
-                                    val formattedName = choreName.split(" ")
-                                        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                                    Log.d(
-                                        "ChoresScreen",
-                                        "Chore added: $formattedName, $points, $description"
-                                    )
-                                    val request = AddChoreRequest(
-                                        groupId = groupId,
-                                        deviceId = deviceId,
-                                        name = formattedName,
-                                        description = description,
-                                        points = points.toInt()
+                            val allValid = nameValid && pointsValid && descValid
 
-                                    )
+                            if (allValid) {
+                                scope.launch {
+                                    try {
+                                        val formattedName = choreName.split(" ")
+                                            .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 
-                                    scope.launch {
-                                        try {
-                                            api.addChore(request)
-                                            Log.d(
-                                                "ChoresScreen",
-                                                "Chore added: $formattedName, $points, $description"
-                                            )
+                                        val normalizedNewName = formattedName.trim().lowercase()
+                                        val normalizedNewDesc = description.trim().lowercase()
 
-//                                    chores = chores + Triple(formattedName, points, description)
-                                            val updatedResponse =
-                                                api.getGroup(mapOf("groupId" to groupId))
-                                            val updatedChores =
-                                                updatedResponse.group.chores ?: emptyList()
-//                                    chores = updatedChores.map { Triple(it.name, it.points.toString(), it.description) }
-                                            chores = updatedChores.map {
-                                                UiChore(
-                                                    name = it.name,
-                                                    description = it.description,
-                                                    points = it.points,
-                                                    status = it.status,
-                                                    assignee = it.assignee
-                                                )
-                                            }
-                                            toastMessage =
-                                                "Chore '$formattedName' created successfully"
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                            toastMessage = "Failed to create chore: ${e.message}"
-                                        } finally {
-                                            choreName = ""
-                                            points = ""
-                                            description = ""
-                                            choreNameError = null
-                                            pointsError = null
-                                            descriptionError = null
+                                        val existingChore = chores.firstOrNull { chore ->
+                                            val normalizedExistingName = chore.name.trim().lowercase()
+                                            val normalizedExistingDesc = chore.description.trim().lowercase()
+
+                                            normalizedExistingName == normalizedNewName &&
+                                                    normalizedExistingDesc == normalizedNewDesc
                                         }
-                                    }
-                                    showDialog = false
-                                }
-                        }
 
-                    }, colors = ButtonDefaults.textButtonColors(
-                        containerColor = buttonColor,
-                        contentColor = textColor
-                    )
+                                        if (existingChore != null) {
+                                            toastMessage = "Chore '$formattedName' already exists!"
+                                            return@launch
+                                        }
+                                        val request = AddChoreRequest(
+                                            groupId = groupId,
+                                            deviceId = deviceId,
+                                            name = formattedName,
+                                            description = description,
+                                            points = points.toInt()
+                                        )
+
+                                        api.addChore(request)
+
+                                        // Refresh data
+                                        refreshChoresAndMembers()
+
+                                        toastMessage = "Chore '$formattedName' created successfully"
+
+                                        // Reset form
+                                        choreName = ""
+                                        points = ""
+                                        description = ""
+                                        showDialog = false
+
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        toastMessage = "Failed to create chore: ${e.message}"
+                                    }
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = buttonColor,
+                            contentColor = confirmTextColor
+                        )
                     ) {
-                        Text("Add", fontFamily = CooperBt,) //font added
+                        Text("Add", fontFamily = CooperBt)
                     }
                 },
                 dismissButton = {
                     val buttonColor = if (darkModeState) {
-                        MaterialTheme.colorScheme.onTertiary.copy(alpha=0.15f)
+                        MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
                     }
 
-                    val textColor = if (darkModeState) {
-                        MaterialTheme.colorScheme.onSecondary
-                    } else {
-                        MaterialTheme.colorScheme.onSecondary
-                    }
                     TextButton(
                         onClick = {
                             choreName = ""
                             points = ""
+                            description = ""
                             choreNameError = null
                             pointsError = null
                             descriptionError = null
@@ -707,7 +996,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             contentColor = textColor
                         )
                     ) {
-                        Text("Cancel", fontFamily = CooperBt,) //font added
+                        Text("Cancel", fontFamily = CooperBt)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.onPrimary,
@@ -715,7 +1004,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                 textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
-        //info box
+
+        // Info Box
         AnimatedVisibility(
             visible = showInfo,
             enter = fadeIn(),
@@ -748,12 +1038,11 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                 )
                 append(subBullet)
 
-                val bulletThree = "• Shake phone to randomly assign chores"
+                val bulletThree = "\n• Shake phone to randomly assign chores"
                 addStyle(
                     style = ParagraphStyle(
-                        textIndent = TextIndent(restLine = 10.sp),
-
-                        ),
+                        textIndent = TextIndent(restLine = 10.sp)
+                    ),
                     start = length,
                     end = length + bulletThree.length
                 )
@@ -788,7 +1077,8 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                     )
                 }
             )
-            // background
+
+            // Background overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -796,7 +1086,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                     .clickable { showInfo = false }
             )
 
-            // info card
+            // Info card
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -815,7 +1105,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                     ) {
                         Text(
                             text = "HOW TO USE",
-                            fontFamily = CooperBt, //font added
+                            fontFamily = CooperBt,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondary
@@ -827,7 +1117,7 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                             text = infoText,
                             inlineContent = inlineContent,
                             color = MaterialTheme.colorScheme.onSecondary,
-                            fontFamily = CooperBt, //font added
+                            fontFamily = CooperBt,
                             fontSize = 16.sp
                         )
 
@@ -851,7 +1141,6 @@ fun ChoresScreen(deviceId: String, groupId: String,onNavigateToHome: () -> Unit,
                 }
             }
         }
-
     }
 }
 
@@ -869,7 +1158,8 @@ fun ChoreCard(
     groupMembers: List<String> = emptyList(),
     onAssignUser: (String) -> Unit = {},
     onChangeStatus: (String) -> Unit = {},
-    darkModeState : Boolean
+    onSubmitChoreChange: (String, String) -> Unit = { _, _ -> },
+    darkModeState: Boolean
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAssignDialog by remember { mutableStateOf(false) }
@@ -880,16 +1170,16 @@ fun ChoreCard(
     val statusOptions = listOf("To do", "In progress", "Completed")
     val scope = rememberCoroutineScope()
 
-    //Shaking Animation Variables
+    // Shaking Animation Variables
     val rotation = remember { Animatable(0f) }
     var shaking by remember { mutableStateOf(false) }
 
-    // swipe animation
+    // Swipe animation
     val swipeOffset = remember { Animatable(0f) }
     val cardAlpha = remember { Animatable(1f) }
     val maxDragX = 150.dp
 
-    //colors for interpolation
+    // Colors for interpolation
     val defaultCardColor = MaterialTheme.colorScheme.onPrimary
     val deleteColor = MaterialTheme.colorScheme.error
     val density = LocalDensity.current
@@ -900,14 +1190,13 @@ fun ChoreCard(
 
     // Control shaking effect
     LaunchedEffect(deleteMode) {
-        if (deleteMode) {
+        if (deleteMode && chore.isNotEmpty()) { // Only shake if there are chores
             shaking = true
-            //nfinite rotation between 0 and 1
             rotation.animateTo(
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(durationMillis = 150, easing = LinearEasing),
-                    repeatMode = RepeatMode.Reverse // from 0 to 1, then 1 back to 0
+                    repeatMode = RepeatMode.Reverse
                 )
             )
         } else {
@@ -925,11 +1214,10 @@ fun ChoreCard(
         detectHorizontalDragGestures(
             onDragEnd = {
                 if (swipeOffset.value < -maxDragXPx / 2) {
-                    //deletion animation
                     scope.launch {
                         swipeOffset.animateTo(-size.width.toFloat(), tween(300))
                         cardAlpha.animateTo(0f, tween(100))
-                        onDelete() // DELETE FROM DB CALLED HERE
+                        onDelete()
                     }
                 } else {
                     scope.launch {
@@ -946,7 +1234,6 @@ fun ChoreCard(
             change.consume()
             if (deleteMode) {
                 scope.launch {
-                    //right-to-left
                     val newOffset = (swipeOffset.value + dragAmount).coerceAtMost(0f)
                     swipeOffset.snapTo(newOffset)
                 }
@@ -954,24 +1241,20 @@ fun ChoreCard(
         }
     }
 
-    //progress of the color change (0.0 to 1.0)
-    val swipeProgress = (-swipeOffset.value / with(density) { maxDragX.toPx()}).coerceIn(0f, 1f)
+    // Progress of the color change (0.0 to 1.0)
+    val swipeProgress = (-swipeOffset.value / with(density) { maxDragX.toPx() }).coerceIn(0f, 1f)
 
-    //interpolated color based on swipe progress
+    // Interpolated color based on swipe progress
     val interpolatedColor = lerp(defaultCardColor, deleteColor, swipeProgress)
 
     val cardGraphicsModifier = modifier
         .fillMaxWidth(0.9f)
         .then(if (deleteMode) swipeToDeleteModifier else Modifier)
         .graphicsLayer(
-            //rotation for shaking
             rotationZ = if (shaking && deleteMode) (rotation.value * 2f) - 1f else 0f,
-            //swipe offset when dragging
             translationX = swipeOffset.value,
-            //fade-out effect deletion
             alpha = cardAlpha.value * (if (isCompleted) 0.6f else 1f)
         )
-        // horizontal offset for shaking
         .offset {
             with(density) {
                 if (shaking && deleteMode) {
@@ -986,7 +1269,11 @@ fun ChoreCard(
         }
         .clickable(enabled = !deleteMode) { isExpanded = !isExpanded }
 
-    val contentTint = lerp(MaterialTheme.colorScheme.onSecondary, MaterialTheme.colorScheme.onError, swipeProgress)
+    val contentTint = lerp(
+        MaterialTheme.colorScheme.onSecondary,
+        MaterialTheme.colorScheme.onError,
+        swipeProgress
+    )
 
     Card(
         modifier = cardGraphicsModifier,
@@ -1005,8 +1292,10 @@ fun ChoreCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     // Profile icon
                     Box(
                         modifier = Modifier
@@ -1019,7 +1308,7 @@ fun ChoreCard(
                         Text(
                             text = "🐝",
                             color = contentTint,
-                            fontFamily = CooperBt, //font added
+                            fontFamily = CooperBt,
                             fontSize = 26.sp
                         )
                     }
@@ -1035,14 +1324,16 @@ fun ChoreCard(
                             fontWeight = FontWeight.Bold,
                             maxLines = if (isExpanded) Int.MAX_VALUE else 1,
                             overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis,
-                            style = androidx.compose.ui.text.TextStyle(
-                                textDecoration = if (isCompleted) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None
+                            style = TextStyle(
+                                textDecoration = if (isCompleted)
+                                    TextDecoration.LineThrough
+                                else
+                                    TextDecoration.None
                             )
                         )
                         Text(
                             text = currentAssignee,
                             color = contentTint,
-                            //fontFamily = CooperBt, //font added
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             fontStyle = FontStyle.Italic,
@@ -1064,12 +1355,11 @@ fun ChoreCard(
                     Text(
                         text = currentStatus,
                         color = when (currentStatus) {
-                            "To do" -> androidx.compose.ui.graphics.Color(0xFFF44336)
-                            "In progress" -> androidx.compose.ui.graphics.Color(0xFFFF9800)
-                            "Completed" -> androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                            "To do" -> Color(0xFFF44336)
+                            "In progress" -> Color(0xFFFF9800)
+                            "Completed" -> Color(0xFF4CAF50)
                             else -> contentTint
                         },
-                        //fontFamily = CooperBt,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontStyle = FontStyle.Italic,
@@ -1100,7 +1390,6 @@ fun ChoreCard(
                         Text(
                             text = description,
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
-                            //fontFamily = CooperBt,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             fontStyle = FontStyle.Italic,
@@ -1134,6 +1423,7 @@ fun ChoreCard(
             }
         }
     }
+
     if (showAssignDialog) {
         val textColor = if (darkModeState) {
             MaterialTheme.colorScheme.onTertiary
@@ -1182,7 +1472,6 @@ fun ChoreCard(
                             Text(
                                 text = "Unassigned",
                                 color = MaterialTheme.colorScheme.onSecondary,
-                                //fontFamily = CooperBt,
                                 fontWeight = FontWeight.Bold,
                                 fontStyle = FontStyle.Italic,
                                 fontSize = 14.sp
@@ -1208,7 +1497,6 @@ fun ChoreCard(
                                 Text(
                                     text = member,
                                     color = MaterialTheme.colorScheme.onSecondary,
-                                    //fontFamily = CooperBt,
                                     fontWeight = FontWeight.Bold,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = 14.sp
@@ -1249,7 +1537,6 @@ fun ChoreCard(
                                 Text(
                                     text = statusOption,
                                     color = MaterialTheme.colorScheme.onSecondary,
-                                    //fontFamily = CooperBt,
                                     fontWeight = FontWeight.Bold,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = 14.sp
@@ -1262,10 +1549,11 @@ fun ChoreCard(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // Call both callbacks
-                        onAssignUser(currentAssignee)
-                        onChangeStatus(currentStatus)
+//                        onAssignUser(currentAssignee)
+//                        onChangeStatus(currentStatus)
+                        onSubmitChoreChange(currentAssignee, currentStatus)
                         showAssignDialog = false
+
                     },
                     colors = ButtonDefaults.textButtonColors(
                         containerColor = MaterialTheme.colorScheme.onSecondary,
@@ -1294,19 +1582,3 @@ fun ChoreCard(
         )
     }
 }
-
-//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO, name = "Light Mode")
-//@Composable
-//fun ChoresPreviewLight() {
-//    HiveTheme(dynamicColor = false) {
-//        ChoresScreen( deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-//    }
-//}
-
-//@Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_YES, name = "Dark Mode")
-//@Composable
-//fun ChoresPreviewDark() {
-//    HiveTheme(dynamicColor = false) {
-//        ChoresScreen(deviceId="preview-device", groupId="preview-group", onNavigateToHome = {})
-//    }
-//}
