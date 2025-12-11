@@ -12,6 +12,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -73,7 +75,7 @@ import com.cs407.hive.workers.WorkerTestUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-
+import com.cs407.hive.ui.screens.getProfilePicResourceId
 
 @Composable
 fun ChoresScreen(
@@ -93,6 +95,8 @@ fun ChoresScreen(
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+    var userProfilePicMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    // Add this function to get profile picture resource ID
 
     var choreNameError by remember { mutableStateOf<String?>(null) }
     var pointsError by remember { mutableStateOf<String?>(null) }
@@ -158,6 +162,7 @@ fun ChoresScreen(
 
     suspend fun fetchUserNames(): Map<String, String> {
         val newUserMap = mutableMapOf<String, String>()
+        val newProfilePicMap = mutableMapOf<String, String>() // NEW: Store profile pics
 
         try {
             val response = api.getUserNames(
@@ -175,23 +180,60 @@ fun ChoresScreen(
 
             Log.d("ChoresScreen", "Group member IDs: $memberIds")
 
-            memberIds.forEachIndexed { index, deviceId ->
+            // Store deviceId -> username mapping
+            memberIds.forEachIndexed { index, memberId ->  // CHANGE: deviceId -> memberId
                 if (index < response.names.size) {
                     val username = response.names[index]
-                    if (username.isNotBlank()) {  // Only add if username is not empty
-                        newUserMap[deviceId] = username
+                    if (username.isNotBlank()) {
+                        newUserMap[memberId] = username  // CHANGE: use memberId
                     }
-                } else {
-                    // Don't create "User X" names - skip or use device ID
-                    newUserMap[deviceId] = deviceId.takeLast(4) // Optional: use last 4 chars
                 }
             }
+
+            // Now fetch profile pictures for each user
+            for (memberId in memberIds) {  // CHANGE: deviceId -> memberId
+                try {
+                    val userResponse = api.getUser(mapOf("userId" to memberId))  // CHANGE
+                    newProfilePicMap[memberId] = userResponse.user.profilePic // CHANGE
+                } catch (e: Exception) {
+                    Log.e("ChoresScreen", "Error fetching profile pic for $memberId: $e")  // CHANGE
+                    newProfilePicMap[memberId] = ""  // CHANGE
+                }
+            }
+
+            // Update the global profile pic map
+            userProfilePicMap = newProfilePicMap
 
         } catch (e: Exception) {
             Log.e("ChoresScreen", "Error fetching usernames: $e")
         }
 
         return newUserMap
+    }
+    // Helper function to get profile picture by username
+    // Helper function to get profile picture by username
+    fun getProfilePicByUsername(username: String): String {
+        if (username == "Unassigned" || username.isBlank() || username == "Unknown User") {
+            return ""
+        }
+
+        // Debug logging
+        Log.d("ChoresScreen", "Looking up profile pic for username: '$username'")
+        Log.d("ChoresScreen", "userMap keys: ${userMap.keys}")
+        Log.d("ChoresScreen", "userMap values: ${userMap.values}")
+
+        // Find the deviceId for this username
+        val userDeviceId = userMap.entries.firstOrNull { it.value == username }?.key
+        Log.d("ChoresScreen", "Found deviceId: $userDeviceId for username: $username")
+
+        if (userDeviceId != null) {
+            val profilePic = userProfilePicMap[userDeviceId] ?: ""
+            Log.d("ChoresScreen", "Profile pic for $username: $profilePic")
+            return profilePic
+        } else {
+            Log.w("ChoresScreen", "No deviceId found for username: $username")
+        }
+        return ""
     }
 
     // Function to refresh chores and members
@@ -226,13 +268,16 @@ fun ChoresScreen(
                         ""
                     }
 
+                    // Get profile picture for the assignee using the username
+                    val assigneeProfilePic = getProfilePicByUsername(assigneeUsername)  // CHANGE: Use helper function
+
                     uniqueChores[key] = UiChore(
                         name = chore.name.trim(),
                         description = chore.description.trim(),
                         points = chore.points,
                         status = chore.status,
                         assignee = assigneeUsername,
-                        profilePic = ""
+                        profilePic = assigneeProfilePic
                     )
                 } else {
                     Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
@@ -266,7 +311,7 @@ fun ChoresScreen(
 
                 Log.d("ChoresScreen", "Initial load - member IDs: $memberIds")
 
-                // Fetch usernames
+                // Fetch usernames AND profile pictures
                 val fetchedUserMap = fetchUserNames()
                 userMap = fetchedUserMap
 
@@ -278,18 +323,20 @@ fun ChoresScreen(
                 val uniqueChores = mutableMapOf<String, UiChore>()
 
                 serverChores.forEach { chore ->
-                    // Create a normalized key (case-insensitive, trimmed)
                     val normalizedName = chore.name.trim().lowercase()
                     val normalizedDesc = chore.description.trim().lowercase()
                     val key = "$normalizedName|$normalizedDesc"
 
                     if (!uniqueChores.containsKey(key)) {
-                        // Convert assignee to username
                         val assigneeUsername = if (chore.assignee.isNotBlank()) {
                             userMap[chore.assignee] ?: "Unknown User"
                         } else {
                             ""
                         }
+
+                        // Get profile picture for the assignee
+                        val assigneeProfilePic = getProfilePicByUsername(assigneeUsername)
+
 
                         uniqueChores[key] = UiChore(
                             name = chore.name.trim(),
@@ -297,7 +344,7 @@ fun ChoresScreen(
                             points = chore.points,
                             status = chore.status,
                             assignee = assigneeUsername,
-                            profilePic = ""
+                            profilePic = assigneeProfilePic
                         )
                     } else {
                         Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
@@ -459,6 +506,7 @@ fun ChoresScreen(
                                         }
                                     }
                                 },
+                                profilePic = currentChore.profilePic,
                                 groupMembers = groupMembers,
                                 onAssignUser = { assignedUsername: String ->
                                     scope.launch {
@@ -479,12 +527,15 @@ fun ChoresScreen(
 
                                             api.addChore(updateRequest)
 
-                                            // Update local state with username
+                                            // Get profile picture for the assigned user
+                                            val newProfilePic = getProfilePicByUsername(assignedUsername)
+
+                                            // Update local state with username AND profile picture
                                             chores = chores.map { c ->
                                                 if (c.name == currentChore.name &&
                                                     c.description == currentChore.description &&
                                                     c.assignee == currentChore.assignee) {
-                                                    c.copy(assignee = assignedUsername)
+                                                    c.copy(assignee = assignedUsername, profilePic = newProfilePic)  // ADD profilePic here
                                                 } else c
                                             }
 
@@ -1104,6 +1155,7 @@ fun ChoreCard(
     deleteMode: Boolean,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    profilePic: String = "",
     groupMembers: List<String> = emptyList(),
     onAssignUser: (String) -> Unit = {},
     onChangeStatus: (String) -> Unit = {},
@@ -1245,6 +1297,8 @@ fun ChoreCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     // Profile icon
+                    // Inside the Box for profile icon:
+                    // Inside the Box for profile icon in ChoreCard:
                     Box(
                         modifier = Modifier
                             .border(2.dp, contentTint, CircleShape)
@@ -1253,12 +1307,23 @@ fun ChoreCard(
                             .background(MaterialTheme.colorScheme.onPrimary),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "🐝",
-                            color = contentTint,
-                            fontFamily = CooperBt,
-                            fontSize = 26.sp
-                        )
+                        // Always try to show profile picture if username is not Unassigned
+                        if (username != "Unassigned" && username != "Unknown User") {
+                            // Show actual profile picture - will use ai_bee for empty strings
+                            Image(
+                                painter = painterResource(id = getProfilePicResourceId(profilePic)),
+                                contentDescription = "$username's profile picture",
+                                modifier = Modifier.size(50.dp)
+                            )
+                        } else {
+                            // Show bee emoji for unassigned
+                            Text(
+                                text = "🐝",
+                                color = contentTint,
+                                fontFamily = CooperBt,
+                                fontSize = 26.sp
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(10.dp))
