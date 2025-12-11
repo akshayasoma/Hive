@@ -84,6 +84,6 @@ Coordinator: <br>
 
 #### Accomplishments:
 Kavya: Added finer datails for the app to be more cohesive. Added error statements visible to the user along with its logic. Fixed the in app dark/light mode UI errors.<br>
-Glenn:<br>
-Pranav:<br>
+Glenn:Added in helper methods for less raw and easier access to data and helped query ui information<br>
+Pranav: Make the app operational again and fix all the bugs associated with it.<br>
 Akshaya:<br>

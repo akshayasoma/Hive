@@ -6,12 +6,25 @@ import com.cs407.hive.data.model.CheckLoginResponse
 import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.DeleteGroceryRequest
+import com.cs407.hive.data.model.GetUserNamesRequest
 import com.cs407.hive.data.model.GroupRequest
 import com.cs407.hive.data.model.GroupResponse
 import com.cs407.hive.data.model.JoinGroupRequest
+import com.cs407.hive.data.model.LeaderboardResponse
 import com.cs407.hive.data.model.LeaveGroupRequest
+import com.cs407.hive.data.model.UpdateChoreAssigneeRequest
+import com.cs407.hive.data.model.UpdateChoreAssigneeResponse
+import com.cs407.hive.data.model.UpdateChoreRequest
+import com.cs407.hive.data.model.UpdateChoreResponse
+import com.cs407.hive.data.model.UpdateChoreStatusRequest
+import com.cs407.hive.data.model.UpdateChoreStatusResponse
+import com.cs407.hive.data.model.UpdateGroceryRequest
+import com.cs407.hive.data.model.UpdateGroceryResponse
 import com.cs407.hive.data.model.UpdateGroupNameRequest
+import com.cs407.hive.data.model.UpdateProfilePicRequest
+import com.cs407.hive.data.model.UpdateProfilePicResponse
 import com.cs407.hive.data.model.UpdateUserNameRequest
+import com.cs407.hive.data.model.UserNamesResponse
 import com.cs407.hive.data.model.UserResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -31,6 +44,12 @@ interface HiveApi {
 
     @POST("/api/user/get")
     suspend fun getUser(@Body body: Map<String, String>): UserResponse
+
+    @POST("/api/group/getUserNames")
+    suspend fun getUserNames(@Body body: GetUserNamesRequest): UserNamesResponse
+
+    @POST("/api/group/leaderboard")
+    suspend fun getGroupLeaderboard(@Body body: Map<String, String>): LeaderboardResponse
 
     @POST("/api/group/get")
     suspend fun getGroup(@Body body: Map<String, String>): GroupResponse
@@ -58,6 +77,22 @@ interface HiveApi {
 
     @POST("/api/group/updateName")
     suspend fun updateGroupName(@Body req: UpdateGroupNameRequest)
+
+    @POST("/api/user/updateProfilePic")
+    suspend fun updateProfilePic(@Body req: UpdateProfilePicRequest): UpdateProfilePicResponse
+
+    @POST("/api/group/updateGrocery")
+    suspend fun updateGrocery(@Body req: UpdateGroceryRequest): UpdateGroceryResponse
+
+    @POST("/api/group/updateChoreAssignee")
+    suspend fun updateChoreAssignee(@Body req: UpdateChoreAssigneeRequest): UpdateChoreAssigneeResponse
+
+    @POST("/api/group/updateChoreStatus")
+    suspend fun updateChoreStatus(@Body req: UpdateChoreStatusRequest): UpdateChoreStatusResponse
+
+    @POST("/api/group/updateChore")
+    suspend fun updateChore(@Body req: UpdateChoreRequest): UpdateChoreResponse
+
 
 
 

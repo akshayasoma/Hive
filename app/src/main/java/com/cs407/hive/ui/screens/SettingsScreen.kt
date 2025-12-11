@@ -80,6 +80,7 @@ import com.cs407.hive.data.local.saveGroupId
 import com.cs407.hive.data.model.GroupDetail
 import com.cs407.hive.data.model.LeaveGroupRequest
 import com.cs407.hive.data.model.UpdateGroupNameRequest
+import com.cs407.hive.data.model.UpdateProfilePicRequest
 import com.cs407.hive.data.model.UpdateUserNameRequest
 import com.cs407.hive.data.model.UserDetail
 import com.cs407.hive.data.network.ApiClient
@@ -114,6 +115,33 @@ fun SettingsScreen(
     val CooperBt = FontFamily(
         Font(R.font.cooper_bt_bold)
     )
+
+    // Add these functions after the font declaration
+    fun getProfilePicString(resId: Int): String {
+        return when (resId) {
+            R.drawable.profile_happy_bee -> "happy_bee"
+            R.drawable.profile_honey_bee -> "honey_bee"
+            R.drawable.profile_cool_bee -> "cool_bee"
+            R.drawable.profile_heart_bee -> "heart_bee"
+            R.drawable.profile_nerd_bee -> "nerd_bee"
+            R.drawable.profile_guitar_bee -> "guitar_bee"
+            R.drawable.ai_bee -> "ai_bee"
+            else -> "ai_bee"
+        }
+    }
+
+    fun getProfilePicResId(profilePicString: String): Int {
+        return when (profilePicString) {
+            "happy_bee" -> R.drawable.profile_happy_bee
+            "honey_bee" -> R.drawable.profile_honey_bee
+            "cool_bee" -> R.drawable.profile_cool_bee
+            "heart_bee" -> R.drawable.profile_heart_bee
+            "nerd_bee" -> R.drawable.profile_nerd_bee
+            "guitar_bee" -> R.drawable.profile_guitar_bee
+            "ai_bee" -> R.drawable.ai_bee
+            else -> R.drawable.ai_bee
+        }
+    }
 
     // 1) These hold the live database data
     var user by remember { mutableStateOf<UserDetail?>(null) }
@@ -156,7 +184,7 @@ fun SettingsScreen(
     var currentGroupName by remember { mutableStateOf(group!!.groupName) }
 //    var currentGroupId by remember { mutableStateOf(group.groupId) }
     val currentGroupId = group!!.groupId
-    var selectedProfilePic by remember { mutableStateOf(R.drawable.ai_bee) }
+    var selectedProfilePic by remember { mutableStateOf(getProfilePicResId(user?.profilePic ?: "ai_bee")) }
     var showDropdown by remember { mutableStateOf(false) }
 
 
@@ -213,6 +241,25 @@ fun SettingsScreen(
                             onClick = {
                                 selectedProfilePic = pic
                                 showDropdown = false
+
+                                scope.launch {
+                                    try {
+                                        val profilePicString = getProfilePicString(pic)
+                                        val response = ApiClient.instance.updateProfilePic(
+                                            UpdateProfilePicRequest(
+                                                deviceId = deviceId,
+                                                profilePic = profilePicString
+                                            )
+                                        )
+                                        Log.d("SettingsScreen", "Profile picture updated: ${response.message}")
+
+                                        user = user?.copy(profilePic = profilePicString)
+                                        userOrig = userOrig?.copy(profilePic = profilePicString)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        Log.e("SettingsScreen", "Failed to update profile picture", e)
+                                    }
+                                }
                             },
                             leadingIcon = {
                                 Image(
