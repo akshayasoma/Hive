@@ -190,4 +190,45 @@ data class UpdateGroceryResponse(
     val groceries: List<GroceryItem>
 )
 
+data class UpdateChoreAssigneeRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int,
+    val newAssignee: String
+)
 
+data class UpdateChoreAssigneeResponse(
+    val message: String,
+    val chores: List<ChoreItem>
+)
+
+data class UpdateChoreStatusRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int,
+    val newStatus: Int
+)
+
+data class UpdateChoreStatusResponse(
+    val message: String,
+    val chores: List<ChoreItem>
+)
+
+data class UpdateChoreRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val points: Int,
+    val newAssignee: String,
+    val newStatus: Int
+)
+
+data class UpdateChoreResponse(
+    val message: String,
+    val chores: List<ChoreItem>
+)

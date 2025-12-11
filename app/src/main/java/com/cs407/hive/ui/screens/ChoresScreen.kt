@@ -67,6 +67,8 @@ import com.cs407.hive.data.model.CompleteChoreRequest
 import com.cs407.hive.data.model.DeleteChoreRequest
 import com.cs407.hive.data.model.GetUserNamesRequest
 import com.cs407.hive.data.model.UiChore
+import com.cs407.hive.data.model.UpdateChoreAssigneeRequest
+import com.cs407.hive.data.model.UpdateChoreRequest
 import com.cs407.hive.data.model.UpdateProfilePicRequest
 import com.cs407.hive.data.network.ApiClient
 import com.cs407.hive.workers.WorkerTestUtils
@@ -461,32 +463,45 @@ fun ChoresScreen(
                                 },
                                 groupMembers = groupMembers,
                                 onAssignUser = { assignedUsername: String ->
+                                    Log.d("ChoreScreen", "Assign clicked. username=$assignedUsername")
                                     scope.launch {
                                         try {
                                             // Convert username back to device ID for the API
                                             val assignedDeviceId = userMap.entries
                                                 .firstOrNull { it.value == assignedUsername }?.key ?: ""
 
-                                            val updateRequest = AddChoreRequest(
+                                            val updateRequest = UpdateChoreAssigneeRequest(
                                                 groupId = groupId,
                                                 deviceId = deviceId,
-                                                name = currentChore.name,
+                                                choreName = currentChore.name,
                                                 description = currentChore.description,
                                                 points = currentChore.points,
-                                                assignee = assignedDeviceId,
-                                                status = currentChore.status
+                                                newAssignee = assignedDeviceId
                                             )
 
-                                            api.addChore(updateRequest)
+                                            val response = api.updateChoreAssignee(updateRequest)
+
 
                                             // Update local state with username
-                                            chores = chores.map { c ->
-                                                if (c.name == currentChore.name &&
-                                                    c.description == currentChore.description &&
-                                                    c.assignee == currentChore.assignee) {
-                                                    c.copy(assignee = assignedUsername)
-                                                } else c
+//                                            chores = chores.map { c ->
+//                                                if (c.name == currentChore.name &&
+//                                                    c.description == currentChore.description &&
+//                                                    c.assignee == currentChore.assignee) {
+//                                                    c.copy(assignee = assignedUsername)
+//                                                } else c
+//                                            }
+                                            chores = response.chores.map { c ->
+                                                UiChore(
+                                                    name = c.name,
+                                                    description = c.description,
+                                                    points = c.points,
+                                                    status = c.status,
+                                                    assignee = c.assignee,
+                                                    profilePic = ""
+                                                )
                                             }
+
+
 
                                             toastMessage = if (assignedUsername.isEmpty() || assignedUsername == "Unassigned") {
                                                 "Chore '${currentChore.name}' is unassigned"
@@ -500,6 +515,7 @@ fun ChoresScreen(
                                     }
                                 },
                                 onChangeStatus = { newStatus: String ->
+                                    Log.d("ChoreScreen", "Assign clicked. newStatus=$newStatus")
                                     scope.launch {
                                         try {
                                             val statusInt = when (newStatus) {
@@ -564,6 +580,41 @@ fun ChoresScreen(
                                         } catch (e: Exception) {
                                             e.printStackTrace()
                                             toastMessage = "Failed to update status: ${e.message}"
+                                        }
+                                    }
+                                },
+                                onSubmitChoreChange = {newAssignee: String, newStatus: String ->
+                                    scope.launch {
+                                        try {
+                                            val statusInt = when (newStatus) {
+                                                "To do" -> 0
+                                                "In progress" -> 1
+                                                "Completed" -> 2
+                                                else -> 0
+                                            }
+                                            val request = UpdateChoreRequest(
+                                                groupId = groupId,
+                                                deviceId = deviceId,
+                                                name = currentChore.name,
+                                                description = currentChore.description,
+                                                points = currentChore.points,
+                                                newAssignee = newAssignee,
+                                                newStatus = statusInt
+                                            )
+
+                                            api.updateChore(request)
+
+                                            chores = chores.map { c ->
+                                                if (c.name == currentChore.name &&
+                                                    c.description == currentChore.description &&
+                                                    c.points == currentChore.points
+                                                ) {
+                                                    c.copy(assignee = newAssignee, status = statusInt)
+                                                } else c
+                                            }
+
+                                        } catch (e: Exception) {
+                                            Log.e("ChoreScreen", "Update failed", e)
                                         }
                                     }
                                 },
@@ -1107,6 +1158,7 @@ fun ChoreCard(
     groupMembers: List<String> = emptyList(),
     onAssignUser: (String) -> Unit = {},
     onChangeStatus: (String) -> Unit = {},
+    onSubmitChoreChange: (String, String) -> Unit = { _, _ -> },
     darkModeState: Boolean
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -1497,8 +1549,9 @@ fun ChoreCard(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onAssignUser(currentAssignee)
-                        onChangeStatus(currentStatus)
+//                        onAssignUser(currentAssignee)
+//                        onChangeStatus(currentStatus)
+                        onSubmitChoreChange(currentAssignee, currentStatus)
                         showAssignDialog = false
 
                     },

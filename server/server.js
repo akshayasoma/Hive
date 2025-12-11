@@ -573,6 +573,154 @@ app.post("/api/user/completeChore", async (req, res) => {
   }
 });
 
+app.post("/api/group/updateChoreAssignee", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description = "", points, newAssignee } = req.body;
+    console.log("Updating Chore Assignee with: ", groupId, deviceId, choreName, description, points, newAssignee)
+    // Validate input
+    if (!groupId || !deviceId || !choreName || points === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Make sure gorup exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Make sure user belongs in group
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Find chore, uniqueness is defined by name, desc, points
+    const chore = group.chores.find(c =>
+      c.name === choreName &&
+      c.description === description &&
+      c.points === points
+    );
+    console.log("Chore found: ", chore)
+    if (!chore)
+      return res.status(404).json({ error: "Chore not found" });
+
+    // Update assignee and save
+    chore.assignee = newAssignee;
+    console.log("updated chore: ", chore)
+//    await chore.save();
+//    console.log("saved chore")
+
+    await group.save();
+    console.log("Saved")
+
+    return res.json({
+      message: "Chore assignee updated",
+      chores: group.chores
+    });
+  } catch (err) {
+    console.error("UPDATE ASSIGNEE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/updateChoreStatus", async (req, res) => {
+  try {
+    const { groupId, deviceId, choreName, description = "", points, newStatus } = req.body;
+    // Make sure right parameters are passed in
+    console.log("Updating Chore Status with: ", groupId, deviceId, choreName, description, points, newStatus)
+    if (!groupId || !deviceId || !choreName || points === undefined || newStatus === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    // Ensure group exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    // AUTH CHECK FOR DEVICE
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    // Find the chore
+    const chore = group.chores.find(c =>
+      c.name === choreName &&
+      c.description === description &&
+      c.points === points
+    );
+
+    if (!chore) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    // update status of the chore and save
+    chore.status = newStatus;
+
+    await group.save();
+
+    return res.json({
+      message: "Chore status updated",
+      chores: group.chores
+    });
+
+  } catch (err) {
+    console.error("UPDATE STATUS ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/group/updateChore", async (req, res) => {
+  try {
+    const { groupId, deviceId, name, description = "", points, newAssignee, newStatus } = req.body;
+
+    console.log("Updating chore with:", groupId, deviceId, name, description, points, newAssignee, newStatus);
+
+    // Make sure it valid request
+    if (!groupId || !deviceId || !name || points === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (newStatus < 0 || newStatus > 2 || !Number.isInteger(newStatus)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    // Make sure group exists
+    const group = await Group.findOne({ groupId });
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    // Auth check on deviceID
+    if (!group.peopleList.includes(deviceId)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Find the chore by unique field
+    const chore = group.chores.find(c =>
+      c.name === name &&
+      c.description === description &&
+      c.points === points
+    );
+
+    if (!chore) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    console.log("Found chore:", chore);
+
+    // Apply updates and save
+    chore.assignee = newAssignee;
+    chore.status = newStatus;
+
+    console.log("Updated chore:", chore);
+
+    // Save group
+    await group.save();
+
+    return res.json({
+      message: "Chore updated successfully",
+      chores: group.chores
+    });
+
+  } catch (err) {
+    console.error("UPDATE CHORE ERROR:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 app.post("/api/group/deleteChore", async (req, res) => {
   try {
     const { groupId, deviceId, choreName, description, points, status, assignee } = req.body;

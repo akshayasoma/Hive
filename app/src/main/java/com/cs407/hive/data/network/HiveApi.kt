@@ -12,6 +12,12 @@ import com.cs407.hive.data.model.GroupResponse
 import com.cs407.hive.data.model.JoinGroupRequest
 import com.cs407.hive.data.model.LeaderboardResponse
 import com.cs407.hive.data.model.LeaveGroupRequest
+import com.cs407.hive.data.model.UpdateChoreAssigneeRequest
+import com.cs407.hive.data.model.UpdateChoreAssigneeResponse
+import com.cs407.hive.data.model.UpdateChoreRequest
+import com.cs407.hive.data.model.UpdateChoreResponse
+import com.cs407.hive.data.model.UpdateChoreStatusRequest
+import com.cs407.hive.data.model.UpdateChoreStatusResponse
 import com.cs407.hive.data.model.UpdateGroceryRequest
 import com.cs407.hive.data.model.UpdateGroceryResponse
 import com.cs407.hive.data.model.UpdateGroupNameRequest
@@ -77,6 +83,15 @@ interface HiveApi {
 
     @POST("/api/group/updateGrocery")
     suspend fun updateGrocery(@Body req: UpdateGroceryRequest): UpdateGroceryResponse
+
+    @POST("/api/group/updateChoreAssignee")
+    suspend fun updateChoreAssignee(@Body req: UpdateChoreAssigneeRequest): UpdateChoreAssigneeResponse
+
+    @POST("/api/group/updateChoreStatus")
+    suspend fun updateChoreStatus(@Body req: UpdateChoreStatusRequest): UpdateChoreStatusResponse
+
+    @POST("/api/group/updateChore")
+    suspend fun updateChore(@Body req: UpdateChoreRequest): UpdateChoreResponse
 
 
 
