@@ -604,6 +604,34 @@ fun ChoresScreen(
 
                                             api.updateChore(request)
 
+                                            // Award points when chore is marked as completed
+                                            if (statusInt == 2 && newAssignee.isNotBlank() && newAssignee != "Unassigned") {
+                                                try {
+                                                    val assignedDeviceId = userMap.entries
+                                                        .firstOrNull { it.value == newAssignee }?.key
+                                                        ?: ""
+
+                                                    if (assignedDeviceId.isNotBlank()) {
+                                                        val completeRequest = CompleteChoreRequest(
+                                                            groupId = groupId,
+                                                            deviceId = assignedDeviceId,
+                                                            choreName = currentChore.name,
+                                                            description = currentChore.description,
+                                                            points = currentChore.points
+                                                        )
+
+                                                        api.completeChore(completeRequest)
+
+                                                        val userResponse = api.getUser(mapOf("deviceId" to assignedDeviceId))
+                                                        val newUserPoints = userResponse.user.points
+
+                                                        toastMessage = "Chore completed! $newAssignee now has $newUserPoints points!"
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Log.e("ChoreScreen", "Error updating points via completeChore: $e")
+                                                }
+                                            }
+
                                             chores = chores.map { c ->
                                                 if (c.name == currentChore.name &&
                                                     c.description == currentChore.description &&
