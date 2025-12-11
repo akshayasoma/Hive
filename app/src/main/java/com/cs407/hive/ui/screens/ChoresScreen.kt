@@ -218,30 +218,31 @@ fun ChoresScreen(
 
             val uniqueChores = mutableMapOf<String, UiChore>()
 
-            serverChores.forEach { chore ->
-                val normalizedName = chore.name.trim().lowercase()
-                val normalizedDesc = chore.description.trim().lowercase()
-                val key = "$normalizedName|$normalizedDesc"
+                serverChores.forEach { chore ->
+                    val normalizedName = chore.name.trim().lowercase()
+                    val normalizedDesc = chore.description.trim().lowercase()
+                    val key = "$normalizedName|$normalizedDesc"
 
-                if (!uniqueChores.containsKey(key)) {
-                    val assigneeUsername = if (chore.assignee.isNotBlank()) {
-                        chore.assignee ?: "Unknown User"
+                    if (!uniqueChores.containsKey(key)) {
+                        // Convert deviceId to username using userMap
+                        val assigneeUsername = if (chore.assignee.isNotBlank()) {
+                            fetchedUserMap[chore.assignee] ?: chore.assignee
+                        } else {
+                            ""
+                        }
+
+                        uniqueChores[key] = UiChore(
+                            name = chore.name.trim(),
+                            description = chore.description.trim(),
+                            points = chore.points,
+                            status = chore.status,
+                            assignee = assigneeUsername,
+                            profilePic = ""
+                        )
                     } else {
-                        ""
+                        Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
                     }
-
-                    uniqueChores[key] = UiChore(
-                        name = chore.name.trim(),
-                        description = chore.description.trim(),
-                        points = chore.points,
-                        status = chore.status,
-                        assignee = assigneeUsername,
-                        profilePic = ""
-                    )
-                } else {
-                    Log.w("ChoresScreen", "DUPLICATE REJECTED: $normalizedName")
                 }
-            }
 
             chores = uniqueChores.values.toList()
             Log.d("ChoresScreen", "Loaded ${chores.size} chores with usernames")
@@ -288,9 +289,9 @@ fun ChoresScreen(
                     val key = "$normalizedName|$normalizedDesc"
 
                     if (!uniqueChores.containsKey(key)) {
-                        // Convert assignee to username
+                        // Convert deviceId to username using userMap
                         val assigneeUsername = if (chore.assignee.isNotBlank()) {
-                            chore.assignee ?: "Unknown User"
+                            fetchedUserMap[chore.assignee] ?: chore.assignee
                         } else {
                             ""
                         }
@@ -484,21 +485,19 @@ fun ChoresScreen(
                                             val response = api.updateChoreAssignee(updateRequest)
 
 
-                                            // Update local state with username
-//                                            chores = chores.map { c ->
-//                                                if (c.name == currentChore.name &&
-//                                                    c.description == currentChore.description &&
-//                                                    c.assignee == currentChore.assignee) {
-//                                                    c.copy(assignee = assignedUsername)
-//                                                } else c
-//                                            }
+                                            // Update local state with username - convert deviceId to username
                                             chores = response.chores.map { c ->
+                                                val assigneeUsername = if (c.assignee.isNotBlank()) {
+                                                    userMap[c.assignee] ?: c.assignee
+                                                } else {
+                                                    ""
+                                                }
                                                 UiChore(
                                                     name = c.name,
                                                     description = c.description,
                                                     points = c.points,
                                                     status = c.status,
-                                                    assignee = c.assignee,
+                                                    assignee = assigneeUsername,
                                                     profilePic = ""
                                                 )
                                             }
@@ -599,46 +598,45 @@ fun ChoresScreen(
                                                 "Completed" -> 2
                                                 else -> 0
                                             }
+
+                                            // Convert username to deviceId for the API
+                                            val assigneeDeviceId = if (newAssignee == "Unassigned" || newAssignee.isBlank()) {
+                                                ""
+                                            } else {
+                                                userMap.entries.firstOrNull { it.value == newAssignee }?.key ?: ""
+                                            }
+
                                             val request = UpdateChoreRequest(
                                                 groupId = groupId,
                                                 deviceId = deviceId,
                                                 name = currentChore.name,
                                                 description = currentChore.description,
                                                 points = currentChore.points,
-                                                newAssignee = newAssignee,
+                                                newAssignee = assigneeDeviceId,
                                                 newStatus = statusInt
                                             )
 
                                             api.updateChore(request)
 
                                             // Award points when chore is marked as completed
-                                            if (statusInt == 2 && newAssignee.isNotBlank() && newAssignee != "Unassigned") {
+                                            if (statusInt == 2 && assigneeDeviceId.isNotBlank()) {
                                                 try {
-                                                    // First try to find deviceId by username (value),
-                                                    // if not found, check if assignee is already a deviceId (key)
-                                                    val assignedDeviceId = userMap.entries
-                                                        .firstOrNull { it.value == newAssignee }?.key
-                                                        ?: userMap.keys.firstOrNull { it == newAssignee }
-                                                        ?: ""
+                                                    Log.d("ChoresScreen", "Completing chore: newAssignee='$newAssignee', resolved deviceId='$assigneeDeviceId', userMap=$userMap")
 
-                                                    Log.d("ChoresScreen", "Assignee lookup: newAssignee='$newAssignee', resolved deviceId='$assignedDeviceId', userMap=$userMap")
+                                                    val completeRequest = CompleteChoreRequest(
+                                                        groupId = groupId,
+                                                        deviceId = assigneeDeviceId,
+                                                        choreName = currentChore.name,
+                                                        description = currentChore.description,
+                                                        points = currentChore.points
+                                                    )
 
-                                                    if (assignedDeviceId.isNotBlank()) {
-                                                        val completeRequest = CompleteChoreRequest(
-                                                            groupId = groupId,
-                                                            deviceId = assignedDeviceId,
-                                                            choreName = currentChore.name,
-                                                            description = currentChore.description,
-                                                            points = currentChore.points
-                                                        )
+                                                    api.completeChore(completeRequest)
 
-                                                        api.completeChore(completeRequest)
+                                                    val userResponse = api.getUser(mapOf("deviceId" to assigneeDeviceId))
+                                                    val newUserPoints = userResponse.user.points
 
-                                                        val userResponse = api.getUser(mapOf("deviceId" to assignedDeviceId))
-                                                        val newUserPoints = userResponse.user.points
-
-                                                        toastMessage = "Chore completed! $newAssignee now has $newUserPoints points!"
-                                                    }
+                                                    toastMessage = "Chore completed! $newAssignee now has $newUserPoints points!"
                                                 } catch (e: Exception) {
                                                     Log.e("ChoreScreen", "Error updating points via completeChore: $e")
                                                 }
