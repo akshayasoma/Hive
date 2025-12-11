@@ -539,9 +539,14 @@ fun ChoresScreen(
 
                                             if (statusInt == 2 && currentChore.assignee.isNotBlank() && currentChore.assignee != "Unassigned") {
                                                 try {
+                                                    // First try to find deviceId by username (value),
+                                                    // if not found, check if assignee is already a deviceId (key)
                                                     val assignedDeviceId = userMap.entries
                                                         .firstOrNull { it.value == currentChore.assignee }?.key
+                                                        ?: userMap.keys.firstOrNull { it == currentChore.assignee }
                                                         ?: ""
+
+                                                    Log.d("ChoresScreen", "Assignee lookup: assignee='${currentChore.assignee}', resolved deviceId='$assignedDeviceId', userMap=$userMap")
 
                                                     if (assignedDeviceId.isNotBlank()) {
                                                         val completeRequest = CompleteChoreRequest(
@@ -607,9 +612,14 @@ fun ChoresScreen(
                                             // Award points when chore is marked as completed
                                             if (statusInt == 2 && newAssignee.isNotBlank() && newAssignee != "Unassigned") {
                                                 try {
+                                                    // First try to find deviceId by username (value),
+                                                    // if not found, check if assignee is already a deviceId (key)
                                                     val assignedDeviceId = userMap.entries
                                                         .firstOrNull { it.value == newAssignee }?.key
+                                                        ?: userMap.keys.firstOrNull { it == newAssignee }
                                                         ?: ""
+
+                                                    Log.d("ChoresScreen", "Assignee lookup: newAssignee='$newAssignee', resolved deviceId='$assignedDeviceId', userMap=$userMap")
 
                                                     if (assignedDeviceId.isNotBlank()) {
                                                         val completeRequest = CompleteChoreRequest(
