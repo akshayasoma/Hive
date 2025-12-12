@@ -79,11 +79,11 @@ Akshaya: Toast messages/notifications show up when users add/delete chores or gr
 ### Week 7
 
 #### Roles:
-Observer: <br>
-Coordinator: <br>
+Observer: Everyone<br>
+Coordinator: Everyone<br>
 
 #### Accomplishments:
 Kavya: Added finer datails for the app to be more cohesive. Added error statements visible to the user along with its logic. Fixed the in app dark/light mode UI errors.<br>
 Glenn:Added in helper methods for less raw and easier access to data and helped query ui information<br>
-Pranav: Make the app operational again and fix all the bugs associated with it.<br>
-Akshaya:<br>
+Pranav: Made the app operational again and fixed all the bugs associated with all core app services(Leaderboard, database connection, chores, and grocery).<br>
+Akshaya: Made leaderboard work with all user. Allowed assigned users to persist withing the database for each chore. Profile pics are saved within settings and show up for users on leaderboard. Points are tallied after each chore completion and reflected in leaderboard.<br>

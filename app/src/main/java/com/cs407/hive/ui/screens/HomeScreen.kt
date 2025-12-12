@@ -171,13 +171,13 @@ fun HomeScreen (deviceId: String,
                     ) {
                         Row {
                             Text(
-                                text = "Hello! ",
+                                text = "Hello, ",
                                 fontSize = 40.sp,
                                 fontFamily = CooperBt,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = user?.name ?: "...",
+                                text = (user?.name + "!") ?: "...",
                                 modifier = Modifier.weight(1f),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
