@@ -32,6 +32,18 @@ import com.cs407.hive.R
 import kotlinx.coroutines.launch
 import android.util.Log
 
+fun getProfilePicResourceId(profilePic: String): Int {
+    return when (profilePic) {
+        "happy_bee" -> R.drawable.profile_happy_bee
+        "honey_bee" -> R.drawable.profile_honey_bee
+        "cool_bee" -> R.drawable.profile_cool_bee
+        "heart_bee" -> R.drawable.profile_heart_bee
+        "nerd_bee" -> R.drawable.profile_nerd_bee
+        "guitar_bee" -> R.drawable.profile_guitar_bee
+        "ai_bee" -> R.drawable.ai_bee
+        else -> R.drawable.ai_bee // Default fallback
+    }
+}
 @Composable
 fun LeaderboardScreen(
     groupId: String,
@@ -71,7 +83,7 @@ fun LeaderboardScreen(
                                 name = user.name,
                                 points = user.points,
                                 profilePic = user.profilePic,
-                                role = getRoleForUser(user.points)
+                                role = ""
                             )
                         )
                         Log.d("LeaderboardScreen", "Loaded user: ${user.name} with ${user.points} points")
@@ -84,7 +96,14 @@ fun LeaderboardScreen(
                 // Sort by points in descending order and assign ranks
                 val sortedUsers = users.sortedByDescending { it.points }
                     .mapIndexed { index, user ->
-                        user.copy(rank = index + 1)
+                        val rank = index + 1
+                        val role = when (rank) {
+                            1 -> "Queen Bee"      // 1st place
+                            2 -> "Worker Bee"     // 2nd place
+                            3 -> "Harvester"      // 3rd place
+                            else -> "Drone"       // Everyone else
+                        }
+                        user.copy(rank = rank, role = role)
                     }
 
                 leaderboardData = sortedUsers
@@ -186,6 +205,7 @@ fun LeaderboardScreen(
                             rank = user.role,
                             points = "${user.points} pts",
                             status = getPlacementString(user.rank),
+                            profilePic = user.profilePic,  // Add this line
                             modifier = cardModifier
                         )
                     }
@@ -225,21 +245,12 @@ fun LeaderboardScreen(
 }
 
 @Composable
-fun getBeeProfileImage(role: String): Painter {
-    return when (role.lowercase()) {
-        "queen", "queen bee" -> painterResource(id = R.drawable.profile_queen_bee)
-        "worker", "worker bee" -> painterResource(id = R.drawable.profile_cool_bee)
-        "harvester", "harvester bee" -> painterResource(id = R.drawable.profile_honey_bee)
-        else -> painterResource(id = R.drawable.profile_drone_bee)
-    }
-}
-
-@Composable
 fun LBCard(
     username: String,
     rank: String,
     points: String,
     status: String,
+    profilePic: String,  // Add profilePic parameter
     modifier: Modifier = Modifier
 ) {
     //font
@@ -247,7 +258,10 @@ fun LBCard(
         Font(R.font.cooper_bt_bold)
     )
 
-    val img = getBeeProfileImage(rank)
+    // Get the actual profile picture based on the profilePic string
+    val profilePicResourceId = getProfilePicResourceId(profilePic)
+    val img = painterResource(id = profilePicResourceId)
+
     Box(
         modifier = modifier
             .height(90.dp)
@@ -273,7 +287,7 @@ fun LBCard(
                 ) {
                     Image(
                         painter = img,
-                        contentDescription = "Bee icon",
+                        contentDescription = "User's profile picture",
                         modifier = Modifier.size(50.dp)
                     )
                 }
@@ -318,15 +332,6 @@ fun LBCard(
     }
 }
 
-// Helper function to determine role based on points
-private fun getRoleForUser(points: Int): String {
-    return when {
-        points >= 1000 -> "Queen Bee"
-        points >= 500 -> "Worker Bee"
-        points >= 200 -> "Harvester"
-        else -> "Drone"
-    }
-}
 
 // Helper function to get placement string
 private fun getPlacementString(rank: Int): String {

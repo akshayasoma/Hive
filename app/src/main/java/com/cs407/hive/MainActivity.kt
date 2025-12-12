@@ -141,7 +141,13 @@ fun AppNavigation(
             LogInScreen(
                 onNavigateToCreate = { navController.navigate("create")},
                 onNavigateToJoin = { navController.navigate("join") },
-                onNavigateToHome = { navController.navigate("home") }
+                onNavigateToHome = { newGroupId ->
+                    groupId = newGroupId
+                    scope.launch {
+                        saveGroupId(context, newGroupId)
+                    }
+                    navController.navigate("home")
+                }
             )
         }
         composable("create") {

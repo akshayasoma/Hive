@@ -80,6 +80,8 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
 
     var userNameError by remember { mutableStateOf(false)}
     var grpNameError by remember {mutableStateOf(false)}
+    var userNameBlankError by remember { mutableStateOf(false) }
+    var grpNameBlankError by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -118,11 +120,27 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                 BeeAnimation()
             }
 
-            if (userNameError || grpNameError) {
+            if (userNameError || grpNameError || userNameBlankError || grpNameBlankError) {
 
+                if (userNameError || grpNameError) {
+                    Text(
+                        text = "Username and Group Name cannot be blank!",
+                        color = Color.Red,
+                        fontFamily = CooperBt,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .fillMaxWidth()
+                    )
+                }
                 Text(
-                    text = if(userNameError) {"Username too long!" } else {
-                        "Group Name too long!"
+                    text =
+                        when {
+                            userNameBlankError && grpNameBlankError -> "Username and Group Name cannot be blank!"
+                            userNameBlankError -> "Username cannot be blank!"
+                            grpNameBlankError -> "Group Name cannot be blank!"
+                            userNameError -> "Username too long!"
+                            else -> "Group Name too long!"
                     },
                     color = Color.Red,
                     fontFamily = CooperBt,
@@ -150,6 +168,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                     onValueChange = {
                         groupName = it
                         grpNameError = it.text.length > 30
+                        grpNameBlankError = it.text.isBlank()
                     },
                     label = {
                         Text(
@@ -192,6 +211,7 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                     onValueChange = {
                         userName = it
                         userNameError = it.text.length > 15
+                        userNameBlankError = it.text.isBlank()
 
                     },
                     label = {
@@ -264,10 +284,14 @@ fun CreateScreen(onNavigateToLogIn: () -> Unit, onNavigateToHome: (String) -> Un
                 // Save Button (Tick Icon)
                 Button(
                     onClick = {
-                        Log.d("CreateScreen", "whyyyyyy")
+                        userNameBlankError = userName.text.isBlank()
+                        grpNameBlankError = groupName.text.isBlank()
+
+                        if (userNameBlankError || grpNameBlankError || userNameError || grpNameError) {
+                            return@Button
+                        }
                         scope.launch {
                             try {
-                                Log.d("CreateScreen", "Try to log in")
                                 val room = GroupRequest(
                                     groupName = groupName.text,
                                     creatorName = userName.text,

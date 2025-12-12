@@ -49,7 +49,7 @@ import com.cs407.hive.R
 
 @Composable
 fun LogInScreen(onNavigateToCreate: () -> Unit,
-                onNavigateToJoin: () -> Unit, onNavigateToHome: () -> Unit) {
+                onNavigateToJoin: () -> Unit, onNavigateToHome: (String) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
@@ -75,7 +75,12 @@ fun LogInScreen(onNavigateToCreate: () -> Unit,
             try {
                 val response = ApiClient.instance.checkLogin(mapOf("deviceId" to deviceId))
                 if (response.message.contains("already in a group", ignoreCase = true)) {
-                    onNavigateToHome()
+                    val groupId = response.existingGroup?.groupId
+                    if (groupId != null) {
+                        onNavigateToHome(groupId)
+                    } else {
+                        isChecking = false
+                    }
                 } else {
                     isChecking = false
                 }

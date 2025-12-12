@@ -42,7 +42,18 @@ data class UserDetail(
 )
 
 data class UserNamesResponse(
-    val names: List<String>
+    val names: List<String>,
+    val userMap: Map<String, String> = emptyMap()
+)
+
+
+data class LeaderboardEntry(
+    val name: String,
+    val points: Int
+)
+
+data class LeaderboardResponse(
+    val leaderboard: List<LeaderboardEntry>
 )
 
 data class GetUserNamesRequest(
@@ -124,7 +135,8 @@ data class UiChore(
     val description: String,
     val points: Int,
     val status: Int,
-    val assignee: String
+    val assignee: String,
+    val profilePic: String
 )
 
 data class UiGrocery(
@@ -153,4 +165,71 @@ data class DeleteGroceryRequest(
     val name: String,
     val description: String,
     val completed: Boolean
+)
+
+data class UpdateProfilePicRequest(
+    val deviceId: String,
+    val profilePic: String
+)
+
+data class UpdateProfilePicResponse(
+    val message: String,
+    val profilePic: String
+)
+
+
+data class UpdateGroceryRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val completed: Boolean
+)
+
+data class UpdateGroceryResponse(
+    val message: String,
+    val groceries: List<GroceryItem>
+)
+
+data class UpdateChoreAssigneeRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int,
+    val newAssignee: String
+)
+
+data class UpdateChoreAssigneeResponse(
+    val message: String,
+    val chores: List<ChoreItem>
+)
+
+data class UpdateChoreStatusRequest(
+    val groupId: String,
+    val deviceId: String,
+    val choreName: String,
+    val description: String,
+    val points: Int,
+    val newStatus: Int
+)
+
+data class UpdateChoreStatusResponse(
+    val message: String,
+    val chores: List<ChoreItem>
+)
+
+data class UpdateChoreRequest(
+    val groupId: String,
+    val deviceId: String,
+    val name: String,
+    val description: String,
+    val points: Int,
+    val newAssignee: String,
+    val newStatus: Int
+)
+
+data class UpdateChoreResponse(
+    val message: String,
+    val chores: List<ChoreItem>
 )
