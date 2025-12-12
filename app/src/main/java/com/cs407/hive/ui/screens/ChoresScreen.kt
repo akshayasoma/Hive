@@ -667,7 +667,11 @@ fun ChoresScreen(
                     shape = CircleShape,
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (deleteMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimary
+                        containerColor = if (deleteMode) {
+                            if (darkModeState) Color(0xFF7C3333) else MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onPrimary
+                        }
                     ),
                     modifier = Modifier.size(60.dp)
                 ) {
